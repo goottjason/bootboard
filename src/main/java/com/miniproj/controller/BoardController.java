@@ -43,7 +43,7 @@ public class BoardController {
     if(bindingResult.hasErrors()) {
       return "/board/register";
     }
-
+    log.info("HBoardDTO : {}", board);
     return "/board/list";
   }
 }
