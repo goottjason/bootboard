@@ -4,13 +4,14 @@
       xmlns:th="http://www.thymeleaf.org"
       layout:decorate="~{layout/basic.html}">
 <head>
+  <link th:href="@{/css/register.css}" rel="stylesheet" />
 </head>
 <body>
 
 <div layout:fragment="content">
   <h1>Board Register</h1>
   <div class="row mt-3">
-    <form th:action="@{/board/register}" th:object="${board}" method="post">
+    <form th:action="@{/board/register}" th:object="${board}" method="post" id="boardForm" enctype="multipart/form-data">
       <div class="input-group mb-3">
         <span class="input-group-text">Title</span>
         <input type="text" class="form-control" th:field="*{title}" placeholder="Title...">
@@ -18,28 +19,119 @@
       </div>
       <div class="input-group mb-3">
         <span class="input-group-text">Content</span>
-        <input type="text" class="form-control" th:field="*{content}" placeholder="Content...">
+        <textarea class="form-control" th:field="*{content}" placeholder="Content..." rows="10"></textarea>
         <div th:if="${#fields.hasErrors('content')}" th:errors="*{content}"></div>
       </div>
       <div class="input-group mb-3">
         <span class="input-group-text">Writer</span>
         <input type="text" class="form-control" th:field="*{writer}" placeholder="Writer...">
       </div>
+      <div class="input-group mb-3">
+        <span class="input-group-text">첨부파일</span>
+        <input type="file" class="form-control" id="fileInput" name="multipartFiles" multiple>
+      </div>
+      <div id="preview"></div>
       <div class="my-4">
         <div class="float-end">
-          <button type="submit" class="btn btn-primary btn-lg "
-                  th:onclick="|location.href='@{/board/register}'|">글쓰기</button>
-          <button type="reset" class="btn btn-secondary btn-lg"
-                  th:onclick="|location.href='@{/board/register}'|">취소</button>
+          <button type="submit" class="btn btn-primary btn-lg" th:onclick="|location.href='@{/board/register}'|">글쓰기</button>
+          <button type="reset" class="btn btn-secondary btn-lg" th:onclick="|location.href='@{/board/register}'|">취소</button>
         </div>
       </div>
     </form>
   </div>
 </div>
-<!--<script layout:fragment="script" th:inline="javascript">-->
-<!--  // comment-->
-<!--  console.log("script...");-->
-<!--  const arr = [[${arr}]]-->
-<!--</script>-->
+<script layout:fragment="script" th:inline="javascript">
+  let selectedFiles = [];
+  $("#fileInput").on('change', function() {
+    //console.log(event.target.files);
+    let newFiles = Array.from(event.target.files);
+    //console.log(newFiles);
+    newFiles.forEach(function(file) {
+      if(!selectedFiles.some(function(f) {
+        return f.name == file.name && f.size == file.size && f.lastModified == file.lastModified
+      })) {
+        selectedFiles.push(file);
+      }
+    });
+    console.log(selectedFiles);
+    updateInputFile();
+    showPreview();
+  });
+
+  function updateInputFile() {
+    const dataTransfer = new DataTransfer();
+    selectedFiles.forEach(function (file) {
+      dataTransfer.items.add(file);
+    });
+    document.getElementById("fileInput").files = dataTransfer.files;
+    console.log(dataTransfer.files);
+    console.log(document.getElementById("fileInput").files);
+  }
+
+  function showPreview() {
+    $("#preview").empty();
+    //미리보기
+    selectedFiles.forEach(function(file, index) {
+      let wrapper = $("<div>").addClass("file-preview").attr("data-index", index);
+      //console.log(wrapper);
+      console.log(file.type);
+
+      let removeBtn = $("<span>X</span>").addClass("file-remove-btn").on("click", handleRemoveFile);
+
+      if (file.type.startsWith("image/")) {
+        //이미지
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const img = $("<img>").attr("src", e.target.result);
+          const fileName = $("<div>").addClass("file-preview-name").text(file.name);
+          wrapper.append(img).append(fileName).append(removeBtn);
+          $("#preview").append(wrapper);
+        };
+        reader.readAsDataURL(file);
+
+      } else {
+        //기타파일
+        wrapper.text("파일: " + file.name).append(removeBtn);
+        $("#preview").append(wrapper);
+      }
+    });
+  }
+
+  function handleRemoveFile(event) {
+    let removeIndex = $(this).parent().data("index");
+    selectedFiles.splice(removeIndex, 1); // 배열에서 removeIndex 번째 요소 1개를 삭제
+    updateInputFile();
+    showPreview();
+  }
+
+  // Ajax로 form submit
+  $("#boardForm").on("submit", function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(document.getElementById("boardForm"));
+    
+    // const formData = new FormData();
+    // selectedFiles.forEach(function(file) {
+    //   formData.append("multipartFiles", file);
+    // });
+
+    $.ajax({
+      url: "/board/register",
+      type: "POST",
+      dataType: "json",
+      data: formData,
+      processData: false, // 쿼리스트링으로 변화하지 말고, formData 그대로 보내도록 설정
+      contentType: false, // application/x-www-form-urlencoded; charset=UTF-8로 자동 설정되는 것을 방지
+      // async: false,
+      success: function (data) {
+        console.log(data);
+      },
+      error: function(data) {
+        console.log(data);
+      },
+      complete: function() {}
+    });
+  });
+</script>
 </body>
 </html>

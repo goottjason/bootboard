@@ -42,3 +42,21 @@ COMMENT = '계층형 게시판';
 -- 글 등록
 insert into hboard(title, content, writer)
 	values('게시판 생성', '많은 이용 바랍니다', 'hong1234'); 
+
+
+
+CREATE TABLE `boardupfiles` (
+  `fileNo` int NOT NULL,
+  `originalFileName` varchar(100) NOT NULL,
+  `newFileName` varchar(150) NOT NULL,
+  `thumbFileName` varchar(150) DEFAULT NULL,
+  `isImage` tinyint DEFAULT '0',
+  `ext` varchar(20) DEFAULT NULL,
+  `size` bigint DEFAULT NULL,
+  `boardNo` int DEFAULT NULL,
+  `base64` longtext,
+  `filePath` varchar(200) DEFAULT NULL,
+  PRIMARY KEY (`fileNo`),
+  KEY `fk_upfiles_hboard_idx` (`boardNo`),
+  CONSTRAINT `fk_upfiles_hboard` FOREIGN KEY (`boardNo`) REFERENCES `hboard` (`boardNo`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='게시글에 업로드되는 파일정보'
