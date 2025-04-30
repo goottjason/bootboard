@@ -10,6 +10,46 @@
 <div layout:fragment="content">
   <h1>글 상세페이지</h1>
 
+  <div class="row mt-3" th:object="${detail}">
+    <div class="input-group mb-3">
+      <span class="input-group-text">Title</span>
+      <input type="text" class="form-control" th:field="*{title}" placeholder="Title...">
+      <div th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></div>
+      <div id="error-title" class="error-message"></div>
+    </div>
+    <div class="input-group mb-3">
+      <span class="input-group-text">Content</span>
+      <textarea class="form-control" th:field="*{content}" placeholder="Content..." rows="10"></textarea>
+      <div th:if="${#fields.hasErrors('content')}" th:errors="*{content}"></div>
+      <div id="error-content" class="error-message"></div>
+    </div>
+    <div class="input-group mb-3">
+      <span class="input-group-text">Writer</span>
+      <input type="text" class="form-control" th:field="*{writer.memberId}" placeholder="Writer...">
+      <div id="error-writer" class="error-message"></div>
+    </div>
+    <div class="input-group mb-3">
+      <span class="input-group-text">postDate</span>
+      <input type="text" class="form-control" th:value="${#temporals.format(detail.postDate, 'yyyy-MM-dd HH:mm')}" placeholder="postDate...">
+      <div id="error-postDate" class="error-message"></div>
+    </div>
+
+    <div th:each="file : ${detail.upfiles}">
+      <div>
+        <img th:if="${file.isImage}" th:src="@{${file.thumbFileName}}">
+        <div th:if="${!file.isImage}" th:text="${file.originalFileName}"></div>
+      </div>
+    </div>
+    <div id="preview"></div>
+    <div class="my-4">
+      <div class="float-end">
+        <button type="submit" class="btn btn-primary btn-lg">글쓰기</button>
+        <button type="reset" class="btn btn-secondary btn-lg">취소</button>
+      </div>
+    </div>
+
+  </div>
+
 </div>
 <script layout:fragment="script" th:inline="javascript">
 
