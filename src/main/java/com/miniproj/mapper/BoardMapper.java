@@ -2,6 +2,7 @@ package com.miniproj.mapper;
 
 import com.miniproj.domain.BoardUpFilesVODTO;
 import com.miniproj.domain.HBoardDTO;
+import com.miniproj.domain.HBoardDetailInfo;
 import com.miniproj.domain.HBoardVO;
 import org.apache.ibatis.annotations.*;
 
@@ -32,5 +33,8 @@ public interface BoardMapper {
             )
           """)
   int insertUploadFile(BoardUpFilesVODTO file);
+
+  // resultMap 이용한 조인문 실행
+  List<HBoardDetailInfo> selectBoardDetailInfoByBoardNo(int boardNo);
 
 }

@@ -19,4 +19,6 @@ public class BoardUpFilesVODTO {
   private int boardNo;
   private String base64;
   private String filePath;
+
+
 }

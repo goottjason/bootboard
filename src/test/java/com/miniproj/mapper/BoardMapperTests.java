@@ -69,4 +69,11 @@ public class BoardMapperTests {
       log.info("{}", vo);
     }
   }
+
+  @Test
+  public void selectBoardDetailInfoByBoardNoTest() {
+
+    log.info("resultMap 결과: {}", boardMapper.selectBoardDetailInfoByBoardNo(1).get(0));
+
+  }
 }
