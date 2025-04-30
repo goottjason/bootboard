@@ -60,3 +60,7 @@ CREATE TABLE `boardupfiles` (
   KEY `fk_upfiles_hboard_idx` (`boardNo`),
   CONSTRAINT `fk_upfiles_hboard` FOREIGN KEY (`boardNo`) REFERENCES `hboard` (`boardNo`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='게시글에 업로드되는 파일정보'
+
+
+-- 업로드 파일 저장
+-- insert into boardUpfiles (boardNo, originalFileName, newFileName, thumbFileName, isImage, ext, size, base64, filePath) values (#{boardNo}, #{originalFileName}, #{newFileName}, #{thumbFileName}, #{isImage}, #{ext}, #{size}, #{base64}, #{filePath});

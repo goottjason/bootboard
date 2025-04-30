@@ -1,6 +1,7 @@
 package com.miniproj.util;
 
 import ch.qos.logback.core.util.FileUtil;
+import com.miniproj.domain.BoardUpFilesVODTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
@@ -16,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
@@ -31,7 +33,13 @@ public class FileUploadUtil {
   @Value(("${file.upload-url-path}"))
   private String uploadUrlPath;
 
-  public void saveFiles(List<MultipartFile> multipartFileList) throws IOException {
+
+  public List<BoardUpFilesVODTO> saveFiles(List<MultipartFile> multipartFileList) throws IOException {
+
+    List<BoardUpFilesVODTO> resultList = new ArrayList<>();
+
+    if (multipartFileList == null || multipartFileList.isEmpty()) return resultList;
+
     String datePath = getDatePath();
     log.info("datePath : {}", datePath);
 
@@ -47,7 +55,7 @@ public class FileUploadUtil {
       String originalFileName = file.getOriginalFilename();
       String uuid = UUID.randomUUID().toString();
 
-      String ext = originalFileName.substring(originalFileName.lastIndexOf(".") + 1);
+      String ext = originalFileName.substring(originalFileName.lastIndexOf(".") + 1).toLowerCase();
       String newName = uuid + "_" + originalFileName;
       String fullPath = targetDir + File.separator + newName;
 
@@ -55,8 +63,10 @@ public class FileUploadUtil {
       file.transferTo(new File(fullPath));
 
       // 이미지이면 썸네일, base64 생성
-      boolean isImage = file.getContentType() != null && file.getContentType().startsWith("image/");
+      // boolean isImage = file.getContentType() != null && file.getContentType().startsWith("image/");
+      boolean isImage = ImageMimeType.isImage(ext);
       String base64 = null;
+
       if (isImage) {
         // 썸네일 이미지를 생성하자
         String thumbName ="thumb_" + newName;
@@ -68,9 +78,27 @@ public class FileUploadUtil {
         byte[] imageBytes = Files.readAllBytes(Paths.get(thumbPath));
         base64 = Base64.getEncoder().encodeToString(imageBytes);
         log.info("base64 : {}", base64);
-
       }
+
+      // /upload/yyyy/MM/dd/새파일명
+      String relativePath = uploadUrlPath + datePath + File.separator + newName;
+      String thumbRelativePath = isImage ? uploadUrlPath + datePath + File.separator + "thumb_" + newName : null;
+
+      BoardUpFilesVODTO dto = new BoardUpFilesVODTO();
+      dto.setOriginalFileName(originalFileName);
+      dto.setNewFileName(newName);
+      dto.setIsImage(isImage);
+      dto.setExt(ext);
+      dto.setSize(file.getSize());
+      dto.setBase64(base64);
+      dto.setFilePath(relativePath);
+      dto.setThumbFileName(thumbRelativePath);
+
+      resultList.add(dto);
+
     }
+
+    return resultList;
   }
 
   private String getDatePath() {

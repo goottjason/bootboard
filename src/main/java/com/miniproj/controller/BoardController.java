@@ -1,5 +1,6 @@
 package com.miniproj.controller;
 
+import com.miniproj.domain.BoardUpFilesVODTO;
 import com.miniproj.domain.HBoardDTO;
 import com.miniproj.domain.HBoardVO;
 import com.miniproj.service.BoardService;
@@ -61,10 +62,29 @@ public class BoardController {
     }
     log.info("HBoardDTO : {}", board);
 
-    for (MultipartFile mpf : board.getMultipartFiles()) {
+    /*for (MultipartFile mpf : board.getMultipartFiles()) {
       log.info("업로드파일이름: {}", mpf.getOriginalFilename());
-    }
-    fileUploadUtil.saveFiles(board.getMultipartFiles());
+    }*/
+
+    List<BoardUpFilesVODTO> upFilesVODTOS = fileUploadUtil.saveFiles(board.getMultipartFiles());
+    board.setUpfiles(upFilesVODTOS);
+
+    boardService.saveBoardWithFiles(board);
+
+    /*for (BoardUpFilesVODTO dto : upFilesVODTOS) {
+      log.info("upfile dto = {}", dto);
+    }*/
+
     return ResponseEntity.ok().build();
+  }
+
+  @GetMapping("/detail")
+  public String boardDetail(@RequestParam(value="boardNo") int boardNo) {
+    log.info("게시판 상태보기 호출... boardNo : {}", boardNo);
+
+    // 글 상세 조회
+    boardService.viewBoardByNo(boardNo);
+
+    return "/board/detail";
   }
 }

@@ -28,5 +28,8 @@ public class HBoardDTO {
   // 업로드된 파일 수집
   private List<MultipartFile> multipartFiles;
 
+  // 실제 저장된 파일 정보
+  private List<BoardUpFilesVODTO> upfiles;
+
 
 }
