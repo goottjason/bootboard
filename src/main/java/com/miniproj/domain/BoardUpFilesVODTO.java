@@ -9,7 +9,7 @@ import lombok.*;
 @Setter
 @ToString
 public class BoardUpFilesVODTO {
-  private  int fileNo;
+  private int fileNo;
   private String originalFileName;
   private String newFileName;
   private String thumbFileName;
@@ -19,6 +19,4 @@ public class BoardUpFilesVODTO {
   private int boardNo;
   private String base64;
   private String filePath;
-
-
 }

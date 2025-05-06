@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org"
+      layout:decorate="~{layout/basic.html}">
+<head>
+  <meta charset="UTF-8">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <title>내 정보 수정</title>
+  <script>
+    // AJAX 함수 (동기)
+    function ajaxFunc(url, data, dataType=null) {
+      let result = "";
+      $.ajax({
+        url : url,
+        type : "POST",
+        data : data,
+        dataType : dataType,
+        async : false,
+        success : function(data) { result = data; }
+      });
+      return result;
+    }
+
+    // 메시지 출력
+    function outputMsg(errorMsg, tagObj, color) {
+      let errTag = $(tagObj);
+      $(errTag).html(errorMsg);
+      $(errTag).css("color", color);
+      $(tagObj).css("border-color", color);
+    }
+
+    // 비밀번호 1차 검증
+    function validCheckPwd1 (pwd1, pwd2) {
+      if (pwd1.length < 8 || pwd1.length > 20) {
+        outputMsg("비밀번호는 8~20자로 입력하세요!", $("#newPwd1MsgArea"), "red");
+        return "fail";
+      } else {
+        if(pwd2 == "") {
+          outputMsg("아래에 다시 한번 입력해주세요.", $("#newPwd1MsgArea"), "orange");
+          return "success";
+        } else {
+          if(pwd1 != pwd2) {
+            outputMsg("비밀번호가 일치하지 않습니다.", $("#newPwd1MsgArea"), "red");
+            outputMsg("", $("#newPwd2MsgArea"), "red");
+            return "fail";
+          } else {
+            outputMsg("비밀번호 검증완료", $("#newPwd1MsgArea"), "green");
+            outputMsg("비밀번호가 일치합니다.", $("#newPwd2MsgArea"), "green");
+            return "success";
+          }
+        }
+      }
+    }
+
+    // 비밀번호 2차 검증
+    function validCheckPwd2 (pwd1, pwd2) {
+      if (pwd1.length < 8 || pwd1.length > 20) {
+        outputMsg("비밀번호는 8~20자로 입력하세요!", $("#newPwd1MsgArea"), "red");
+        return "fail";
+      }
+      if(pwd1 != pwd2) {
+        outputMsg("비밀번호가 일치하지 않습니다.", $("#newPwd1MsgArea"), "red");
+        outputMsg("", $("#newPwd2MsgArea"), "red");
+        return "fail";
+      } else {
+        outputMsg("비밀번호 검증완료", $("#newPwd1MsgArea"), "green");
+        outputMsg("비밀번호가 일치합니다.", $("#newPwd2MsgArea"), "green");
+        return "success";
+      }
+    }
+
+    // 이름 검증
+    function validCheckmemberName (memberName, id) {
+      if(memberName.length > 0) {
+        outputMsg("사용가능", $("#"+id), "green");
+        return "success";
+      } else {
+        outputMsg("이름은 필수 입력입니다.", $("#"+id), "red");
+        return "fail";
+      }
+    }
+
+    // 주소 검증
+    function validCheckUseraddr(useraddr, id) {
+      if(useraddr.length > 0) {
+        outputMsg("사용가능", $("#"+id), "green");
+        return "success";
+      } else {
+        outputMsg("주소는 필수 입력입니다.", $("#"+id), "red");
+        return "fail";
+      }
+    }
+
+    let isPwdModCheck = false;
+    let isNameCheck = false;
+    let isAddrCheck = false;
+
+    $(function() {
+      // 비밀번호 검증 이벤트
+      $("#mypageNewMemberPwd1").on("blur", function () {
+        let pwd1 = $("#mypageNewMemberPwd1").val();
+        let pwd2 = $("#mypageNewMemberPwd2").val();
+        let result = validCheckPwd1(pwd1, pwd2);
+        $("#mypagePwd1Valid").val(result === "success" ? "checked" : "");
+      });
+      $("#mypageNewMemberPwd2").on("blur", function () {
+        let pwd1 = $("#mypageNewMemberPwd1").val();
+        let pwd2 = $("#mypageNewMemberPwd2").val();
+        let result = validCheckPwd2(pwd1, pwd2);
+        $("#mypagePwd2Valid").val(result === "success" ? "checked" : "");
+      });
+      $("#mypageNewMemberName").on("blur", function() {
+        let memberName = $("#mypageNewMemberName").val();
+        let result = validCheckmemberName(memberName, "newMemberNameMsgArea");
+        $("#mypageNameValid").val(result === "success" ? "checked" : "");
+      });
+      $("#mypageNewUseraddr").on("blur", function() {
+        let addr = $("#mypageNewUseraddr").val();
+        let result = validCheckUseraddr(addr, "newUseraddrMsgArea");
+        $("#mypageAddrValid").val(result === "success" ? "checked" : "");
+      });
+    });
+
+    // 비밀번호 변경 UI 표시
+    function pwdmodBtnClick() {
+      isPwdModCheck = true;
+      $("#pwdmod").show();
+    }
+
+    // 기존 비밀번호 확인
+    function existingpwdBtnClick() {
+      let memberId = /*[[${authMember.memberId}]]*/ "";
+      let memberPwd = $("#mypageMemberPwd").val();
+      let data = { "memberId" : memberId, "memberPwd": memberPwd };
+      let result = ajaxFunc("/user/existingpwdcheck", data, "text");
+      if (result == "success") {
+        outputMsg("새로운 비밀번호를 기입하고 저장버튼을 누르면 변경됩니다.", $("#existingpwdErrorMsg"), "green");
+        $("#newMemberPwdArea").show();
+      } else {
+        outputMsg("기존 비밀번호가 불일치합니다.", $("#existingpwdErrorMsg"), "red");
+        $("#newMemberPwdArea").hide();
+      }
+    }
+
+    // 최종 유효성 검사
+    function mainpageIsValid() {
+      let pwd1Check = isPwdModCheck ? $("#mypagePwd1Valid").val() : "checked";
+      let pwd2Check = isPwdModCheck ? $("#mypagePwd2Valid").val() : "checked";
+      let nameCheck = isNameCheck ? $("#mypageNameValid").val() : "checked";
+      let addrCheck = isAddrCheck ? $("#mypageAddrValid").val() : "checked";
+      return pwd1Check == "checked" && pwd2Check == "checked"
+        && nameCheck == "checked" && addrCheck == "checked";
+    }
+
+    // 취소 버튼
+    function resetCheckMyPage() {
+      location.href = "/mypage";
+    }
+  </script>
+
+  <style>
+    .mypage-body {
+      background: #f8fafc;
+      font-family: 'Pretendard','Inter','Apple SD Gothic Neo',sans-serif;
+    }
+    .mypage-container {
+      max-width: 540px;
+      margin: 48px auto;
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 2px 16px rgba(40,60,90,0.08);
+      padding: 36px 32px 28px 32px;
+    }
+    .mypage-title {
+      font-size: 1.7rem;
+      font-weight: 700;
+      color: #0f1d41;
+      margin-bottom: 32px;
+      text-align: center;
+      letter-spacing: -1px;
+    }
+    .result-msg {
+      text-align: center;
+      color: #AF987E;
+    }
+    .mypage-form-container {
+      padding: 0;
+      margin-top: 24px;
+    }
+    .mypage-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 14px;
+    }
+    .table-label {
+      width: 30%;
+      font-weight: 600;
+      color: #0f1d41;
+      background: #f6f8fb;
+      border-radius: 8px 0 0 8px;
+      padding: 12px 14px;
+    }
+    .table-value {
+      background: #f7f7fa;
+      border-radius: 0 8px 8px 0;
+      padding: 12px 14px;
+    }
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 28px;
+    }
+    .btn {
+      flex: 1;
+      border: none;
+      border-radius: 7px;
+      padding: 12px 0;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .btn-submit {
+      background: #0f1d41;
+      color: #fff;
+    }
+    .btn-cancel {
+      background: #e0e4ea;
+      color: #0f1d41;
+    }
+    .btn-pwdmod, .btn-pwdmod-confirm {
+      background: #0f1d41;
+      color: #fff;
+      border-radius: 6px;
+      padding: 7px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 8px;
+    }
+    .pwdmod-area {
+      margin-top: 12px;
+      display: none;
+    }
+    .pwdmod-guide {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 6px;
+    }
+    .mypage-input {
+      width: 70%;
+      padding: 8px 12px;
+      border: 1px solid #e0e4ea;
+      border-radius: 6px;
+      background: #f7f8fa;
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+    .new-pwd-area {
+      margin-top: 12px;
+      display: none;
+    }
+    .new-pwd-label {
+      margin-bottom: 4px;
+      margin-top: 8px;
+      font-weight: 500;
+    }
+    .error-msg {
+      color: #d32f2f;
+      font-size: 13px;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+
+<body class="mypage-body">
+<div layout:fragment="content">
+  <div class="mypage-container">
+    <div class="row">
+      <h1 class="mypage-title" th:text="${authMember.memberName} + ' 님의 회원 정보'"></h1>
+      <div class="result-msg" th:text="${resultMsg}"></div>
+      <div class="mypage-form-container">
+        <form action="updateinfo" method="POST">
+          <table class="mypage-table">
+            <tr>
+              <td class="table-label">아이디</td>
+              <td class="table-value" th:text="${authMember.memberId}"></td>
+            </tr>
+            <tr>
+              <td class="table-label">비밀번호</td>
+              <td class="table-value">
+                <input type="button" value="비밀번호 변경" onclick="pwdmodBtnClick()" class="btn btn-pwdmod">
+                <div id="pwdmod" class="pwdmod-area">
+                  <div class="pwdmod-guide">먼저, 기존 비밀번호를 입력해주세요.</div>
+                  <input type="password" id="mypageMemberPwd" placeholder="기존 비밀번호" class="mypage-input">
+                  <input type="button" value="확인" onclick="existingpwdBtnClick();" class="btn btn-pwdmod-confirm">
+                  <div id="existingpwdErrorMsg" class="error-msg"></div>
+                  <div id="newMemberPwdArea" class="new-pwd-area">
+                    <p class="new-pwd-label">새로운 비밀번호</p>
+                    <input type="password" id="mypageNewMemberPwd1" placeholder="새 비밀번호" name="memberPwd" class="mypage-input">
+                    <div id="newPwd1MsgArea" class="error-msg"></div>
+                    <input type="hidden" id="mypagePwd1Valid" />
+                    <p class="new-pwd-label">새로운 비밀번호 재확인</p>
+                    <input type="password" id="mypageNewMemberPwd2" placeholder="새 비밀번호 재입력" class="mypage-input">
+                    <div id="newPwd2MsgArea" class="error-msg"></div>
+                    <input type="hidden" id="mypagePwd2Valid" />
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td class="table-label">이메일</td>
+              <td class="table-value" th:text="${authMember.email}"></td>
+            </tr>
+            <tr>
+              <td class="table-label">이름</td>
+              <td class="table-value">
+                <input id="mypageNewMemberName" type="text" th:value="${authMember.memberName}" name="memberName" class="mypage-input">
+                <div id="newMemberNameMsgArea" class="error-msg"></div>
+                <input type="hidden" id="mypageNameValid" />
+              </td>
+            </tr>
+          </table>
+          <div class="btn-row">
+            <button type="submit" class="btn btn-submit" onclick="return mainpageIsValid();">수정</button>
+            <button type="reset" class="btn btn-cancel" onclick="resetCheckMyPage();">취소</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

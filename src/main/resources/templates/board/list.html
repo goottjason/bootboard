@@ -8,8 +8,8 @@
 <body>
 
 <div layout:fragment="content">
-  <h1>Board List</h1>
-  <button type="button" class="btn btn-info btn-lg d-flex float-end"
+  <h1>게시판</h1>
+  <button type="button" class="btn btn-secondary btn-lg d-flex float-end"
           th:onclick="|location.href='@{/board/register}'|">글쓰기</button>
   <table class="table table-hover">
     <thead>
@@ -31,13 +31,6 @@
       </tr>
     </tbody>
   </table>
-
-
 </div>
-<!--<script layout:fragment="script" th:inline="javascript">-->
-<!--  // comment-->
-<!--  console.log("script...");-->
-<!--  const arr = [[${arr}]]-->
-<!--</script>-->
 </body>
 </html>

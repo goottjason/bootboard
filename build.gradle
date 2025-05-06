@@ -24,28 +24,29 @@ repositories {
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.4'
-	compileOnly 'org.projectlombok:lombok'
-	developmentOnly 'org.springframework.boot:spring-boot-devtools'
-	runtimeOnly 'com.mysql:mysql-connector-j'
-	annotationProcessor 'org.projectlombok:lombok'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testImplementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter-test:3.0.4'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+  implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+  implementation 'org.springframework.boot:spring-boot-starter-web'
+  implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.4'
+  compileOnly 'org.projectlombok:lombok'
+  developmentOnly 'org.springframework.boot:spring-boot-devtools'
+  runtimeOnly 'com.mysql:mysql-connector-j'
+  annotationProcessor 'org.projectlombok:lombok'
+  testImplementation 'org.springframework.boot:spring-boot-starter-test'
+  testImplementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter-test:3.0.4'
+  testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
   implementation 'nz.net.ultraq.thymeleaf:thymeleaf-layout-dialect'
 
   testCompileOnly 'org.projectlombok:lombok' // 테스트 의존성 추가
   testAnnotationProcessor 'org.projectlombok:lombok' // 테스트 의존성 추가
 
-  // https://mvnrepository.com/artifact/jakarta.validation/jakarta.validation-api
   implementation("jakarta.validation:jakarta.validation-api:3.0.2")
-  // https://mvnrepository.com/artifact/org.hibernate/hibernate-validator
   implementation("org.hibernate.validator:hibernate-validator:8.0.1.Final")
 
-  // https://mvnrepository.com/artifact/net.coobird/thumbnailator
   implementation 'net.coobird:thumbnailator:0.4.8'
+  implementation 'com.sun.mail:javax.mail:1.6.2'
+  implementation 'org.springframework.boot:spring-boot-starter-mail'
+
+
 }
 
 tasks.named('test') {

@@ -8,8 +8,6 @@
 <body>
 
 <div layout:fragment="content">
-  <h1>글 상세페이지</h1>
-
   <div class="row mt-3" th:object="${detail}">
     <div class="input-group mb-3">
       <span class="input-group-text">Title</span>
@@ -34,17 +32,25 @@
       <div id="error-postDate" class="error-message"></div>
     </div>
 
-    <div th:each="file : ${detail.upfiles}">
+    <div th:if="${detail.upfiles != null and !#lists.isEmpty(detail.upfiles)}">
+      <div th:each="file : ${detail.upfiles}">
+        <div th:if="${file != null}">
+          <div th:if="${file.isImage == true}">
+            <img th:src="@{${file.thumbFileName}}">
+            <div th:text="${file.originalFileName}"></div>
+          </div>
+          <div th:if="${file.isImage != true}">
+            <div th:text="${file.originalFileName}"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div th:if="${detail.upfiles == null or #lists.isEmpty(detail.upfiles)}">
       <div>
-        <img th:if="${file.isImage}" th:src="@{${file.thumbFileName}}">
-        <!--<div th:if="${!file.isImage}" th:text="${file.originalFileName}"></div>-->
+        <p>첨부파일이 없습니다.</p>
       </div>
     </div>
 
-    <!--<div th:if="${#lists.isEmpty(detail.upfiles)}">
-      <p>첨부파일이 없습니다.</p>
-    </div>-->
-    <div id="preview"></div>
     <div class="my-4">
       <div class="float-end">
         <a th:href="@{/board/list}" class="btn btn-primary btn-lg">목록으로</a>

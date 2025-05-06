@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org"
+      layout:decorate="~{layout/basic.html}">
+<head>
+  <meta charset="UTF-8">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <title>회원가입</title>
+
+  <script type="text/javascript">
+
+    $(function() {
+
+      // 빈칸으로 블러했을 때에만, outputMsg(red)
+      $(document).on("blur", "#email", function () {
+        if($("#email").val().length == 0) {
+          outputMsg("이메일은 필수항목입니다.", $("#email"), "red");
+        }
+      });
+      // 이메일을 입력하는 동안 주소 유효성 검증
+      $(document).on("keyup", "#email", function () {
+        let email = $("#email").val();
+        console.log(email);
+        if($("#email").val().length > 0) {
+          outputMsg("올바른 이메일 형식으로 입력해주세요.", $("#email"), "red");
+          let email = $("#email").val();
+          let emailRegExp = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+          if (!emailRegExp.test(email)) {
+            outputMsg("올바른 이메일 형식으로 입력해주세요.", $("#email"), "red");
+          } else {
+            outputMsg("올바른 이메일 형식입니다.", $("#email"), "green");
+            // 유효성 검증 완료되면, 인증하기 버튼 활성화
+            $("#emailAuthBtn").show();
+          }
+        }
+      });
+      // 인증코드를 입력하면, 보내진인증코드와 일치여부 확인
+      $(document).on("keyup", "#authCodeInput", function () {
+
+      });
+
+      $(document).on("blur", "#memberName", function () {
+        console.log($("#memberName").val());
+        if($("#memberName").val().length > 0) { //
+          outputMsg("사용가능", $("#memberName"), "green");
+          $("#nameValid").val("checked");
+        } else {
+          outputMsg("이름은 필수 입력입니다.", $("#memberName"), "red");
+          $("#nameValid").val("");
+        }
+      });
+    });
+
+
+
+    // ▶▶▶▶▶ 이메일 관련 함수
+
+    function uniqueEmailCheck() {
+      let email = $("#email").val();
+      $.ajax({
+        url: "/member/uniqueEmailCheck", // 데이터가 송수신될 서버의 주소
+        type: "POST", // 통신 방식 (GET, POST, PUT, DELETE)
+        data: { email: email },
+        // dataType: "text",
+        // async: false,
+        success: function (data) {
+          console.log(data); // 데이터가 넘어오면 콘솔에 확인
+          if (data == 1) {
+            outputMsg("중복됩니다. 다른 이메일을 입력하세요.", $("#email"), "red");
+          } else {
+            callSendEmail();
+          }
+
+        },
+        error: function (data) {
+          console.log(data);
+        },
+        complete: function () {},
+      });
+    }
+
+    // "인증하기" 버튼 클릭시 작동
+    function emailAuth() {
+      uniqueEmailCheck();
+    }
+
+    function emailInput() {
+      let memberAuthCode = $("#authCodeInput").val();
+      $.ajax({
+        url: "/member/checkAuthCode", // 데이터가 송수신될 서버의 주소
+        type: "POST", // 통신 방식 (GET, POST, PUT, DELETE)
+        data: { "memberAuthCode": memberAuthCode },
+        // dataType: "text",
+        success: function (data) {
+          console.log(data); // 데이터가 넘어오면 콘솔에 확인
+          if (data == "success") {
+            outputMsg("인증완료", $("#email"), "blue");
+            // 이메일인풋, 인증인풋, 인증하기 비활성화
+//	        $(".authDiv").remove();
+            $(".authDiv").hide();
+            $("#emailInputBtn").hide();
+            $("#emailValid").val("checked");
+          } else {
+            outputMsg("인증번호가 일치하지 않습니다. 다시 입력해주세요.", $("#email"), "red");
+          }
+
+        },
+        error: function (data) {
+          console.log(data);
+        },
+        complete: function () {},
+      });
+    }
+
+    function callSendEmail() {
+      $.ajax({
+        url: "/member/callSendEmail", // 데이터가 송수신될 서버의 주소
+        type: "POST", // 통신 방식 (GET, POST, PUT, DELETE)
+        data: {"email": $("#email").val()},
+        //dataType: "text",
+        success: function (data) {
+          console.log(data); // 데이터가 넘어오면 콘솔에 확인
+          if (data == "success") {
+            $(".authDiv").show();
+            startTimer(); // 타이머 동작을 호출
+            $("#emailAuthBtn").hide();
+            $("#emailInputBtn").show();
+          }
+        },
+        error: function () {},
+        complete: function () {},
+      });
+    }
+
+    let timeLeft = 180; // 초단위
+    let intervalId = null;
+
+    function startTimer() {
+      // 3분(180초)부터 줄어가야 함
+      // setInterval
+      clearTimer();
+      timeLeft = 180;
+      updateDisplay(timeLeft);
+      intervalId = setInterval(function() {
+        timeLeft--;
+        updateDisplay(timeLeft);
+        if (timeLeft <= 0) {
+          // 타이머 종료
+          clearTimer();
+          expiredTimer();
+        }
+      }, 1000); // 밀리초이므로 1초 = 1000
+
+    }
+
+    function expiredTimer() {
+      // 인증버튼 비활성화
+      $("#authBtn").hide();
+
+      // 타이머 종료시, 백엔드에도 인증시간이 만료되었음을 알려야 한다.
+      if($("#emailValid").val() != "checked") {
+        $.ajax({
+          url: "/member/clearAuthCode", // 데이터가 송수신될 서버의 주소
+          type: "POST", // 통신 방식 (GET, POST, PUT, DELETE)
+          dataType: "text", // 수신받을 데이터 타입 (MIME TYPE) (text, json, xml)
+          success: function (data) {
+            console.log(data); // 데이터가 넘어오면 콘솔에 확인
+            alert("인증시간이 만료. 인증메일을 다시 보냈으니, 확인해주세요.");
+            callSendEmail();
+            outputMsg("", $("#email"), "blue");
+            startTimer();
+//         $("#emailAuthBtn").show();
+          },
+          error: function () {},
+          complete: function () {},
+        });
+      }
+    }
+
+    function clearTimer() {
+      if (intervalId != null) {
+        clearInterval(intervalId); // ID값을 전달하여 setInterval을 클리어할 수 있음
+        intervalId = null; // 다시 초기세팅하듯이 돌려놓음
+      }
+    }
+
+    function updateDisplay(seconds) {
+      // 시간출력
+      let min = Math.floor(seconds/60);
+      let sec = String(seconds % 60).padStart(2, "0"); // 2자리인데 남은 부분은 왼쪽에 0으로 채워주는 메서드
+      let remainTime = min + ":" + sec;
+      $(".timer").html(remainTime);
+    }
+
+
+
+
+
+
+    function outputMsg(msg, tagObj, color) {
+      let errTag = $(tagObj).closest('.form-group').find('.errorMsg');
+      // let errTag = $(tagObj);
+      $(errTag).html(msg);
+      $(errTag).css("color", color);
+      $(tagObj).css("border-color", color);
+    }
+
+    function idCheck() {
+      let memberId = $("#memberId").val();
+      $.ajax({
+        url: "/member/idIsDuplicate", // 데이터가 송수신될 서버의 주소
+        type: "POST", // 통신 방식 (GET, POST, PUT, DELETE)
+        // dataType: "json", // 수신받을 데이터 타입 (MIME TYPE)
+        data: JSON.stringify({ memberId: memberId }),
+        contentType: "application/json",
+        // processData: false,
+        // async: false,
+        success: function (data) {
+          console.log(data);
+          outputMsg(data, $("#memberId"), "green");
+          $("#idValid").val("checked");
+        },
+        error: function (data) {
+          console.log(data);
+          outputMsg(data.responseText, $("#memberId"), "red");
+          $("#idValid").val("");
+        },
+        complete: function () {},
+      });
+    }
+
+    function pwdCheck() {
+      let memberPwd1 = $("#memberPwd1").val();
+      let memberPwd2 = $("#memberPwd2").val();
+      if (memberPwd1 == memberPwd2) {
+        $.ajax({
+          url: "/member/pwdCheck", // 데이터가 송수신될 서버의 주소
+          type: "POST", // 통신 방식 (GET, POST, PUT, DELETE)
+          // dataType: "json", // 수신받을 데이터 타입 (MIME TYPE)
+          data: JSON.stringify({ memberPwd: memberPwd1 }),
+          contentType: "application/json",
+          // processData: false,
+          // async: false,
+          success: function (data) {
+            console.log(data);
+            outputMsg(data, $("#memberPwd1"), "green");
+            $("#pwdValid").val("checked");
+          },
+          error: function (data) {
+            console.log(data);
+            outputMsg(data.responseText, $("#memberPwd1"), "red");
+            $("#pwdValid").val("");
+          },
+          complete: function () {},
+        });
+      } else {
+        outputMsg("동일한 비밀번호를 2번 입력하세요.", $("#memberPwd1"), "red");
+      }
+    }
+
+
+
+
+
+    function idValid() {
+      let result = false;
+      if ($("#idValid").val() == "checked") {
+        result = true;
+      }
+      return result;
+    }
+    function pwdValid() {
+      let result = false;
+      if ($("#pwdValid").val() == "checked") {
+        result = true;
+      }
+      return result;
+    }
+    function emailValid() {
+      let result = false;
+      if ($("#emailValid").val() == "checked") {
+        result = true;
+      }
+      return result;
+    }
+    function nameValid() {
+      let result = false;
+      if ($("#nameValid").val() == "checked") {
+        result = true;
+      }
+      return result;
+    }
+    function isValid() {
+      let result = false;
+      let idCheck = idValid();
+      let pwdCheck = pwdValid();
+      let emailCheck = emailValid();
+      let nameCheck = nameValid();
+      console.log(idCheck, pwdCheck, emailCheck, nameCheck);
+      if (idCheck && pwdCheck && emailCheck && nameCheck) {
+        result = true;
+      }
+      return result;
+    }
+
+    function resetCheck() {
+      location.href = "/signup";
+    }
+
+  </script>
+  <style>
+    .signup-box {
+      max-width: 550px;
+      margin: 0 auto;
+      padding: 30px;
+      background-color: #f8f9fa;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    }
+
+    .signup-status {
+      color: #dc3545;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    .signup-title {
+      text-align: center;
+      margin-bottom: 25px;
+      color: #0f1d41;
+      font-weight: 600;
+      padding-bottom: 15px;
+    }
+
+    .signup-form {
+      width: 100%;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    .form-label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: #333;
+    }
+
+    .errorMsg {
+      color: #dc3545;
+      font-size: 13px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .input-row.align-center {
+      align-items: center;
+    }
+
+    .form-control {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ced4da;
+      border-radius: 5px;
+      font-size: 14px;
+      background: #fff;
+    }
+
+    .mb-2 {
+      margin-bottom: 10px;
+    }
+
+    .authDiv {
+      display: none;
+      margin-top: 10px;
+    }
+
+    .timer {
+      color: #dc3545;
+      font-weight: 500;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 15px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 5px;
+      padding: 10px 30px;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 14px;
+      transition: background-color 0.3s;
+    }
+
+    .btn-idcheck, .btn-pwdcheck {
+      background-color: #0f1d41;
+      color: white;
+      padding: 8px 15px;
+      white-space: nowrap;
+    }
+
+    .btn-emailauth, .btn-emailinput {
+      background-color: #28a745;
+      color: white;
+      padding: 8px 15px;
+      white-space: nowrap;
+    }
+
+    .btn-submit {
+      background-color: #32691e;
+      color: white;
+    }
+
+    .btn-cancel {
+      background-color: #dc3545;
+      color: white;
+    }
+    .timer { color: red }
+  </style>
+</head>
+
+
+
+<body>
+<div layout:fragment="content">
+  <div class="container mt-5">
+    <div class="signup-box">
+      <div class="signup-status" th:if="${signupStatus != null}" th:text="${signupStatus}"></div>
+      <h3 class="signup-title">회원가입</h3>
+      <form action="signup" method="POST" class="signup-form">
+        <!-- 아이디 -->
+        <div class="form-group">
+          <label for="memberId" class="form-label">
+            아이디&nbsp;
+            <span class="errorMsg"></span>
+          </label>
+          <div class="input-row">
+            <input type="text" class="form-control" id="memberId" placeholder="Enter ID" name="memberId">
+            <button type="button" class="btn btn-idcheck" onclick="idCheck();">중복 및 유효성검사</button>
+          </div>
+          <input type="hidden" id="idValid" />
+        </div>
+        <!-- 비밀번호 -->
+        <div class="form-group">
+          <label for="memberPwd1" class="form-label">
+            비밀번호
+            <span class="errorMsg"></span>
+          </label>
+          <input type="password" class="form-control" id="memberPwd1" placeholder="Enter password" name="memberPwd">
+        </div>
+        <!-- 비밀번호 재입력 -->
+        <div class="form-group">
+          <label for="memberPwd2" class="form-label">
+            비밀번호 재입력
+            <span class="errorMsg"></span>
+          </label>
+          <div class="input-row">
+            <input type="password" class="form-control" id="memberPwd2" placeholder="Enter password again">
+            <input type="hidden" id="pwdValid" />
+            <button type="button" class="btn btn-pwdcheck" onclick="pwdCheck();">비밀번호 유효성검사</button>
+          </div>
+        </div>
+
+        <!-- 이메일 -->
+        <div class="form-group">
+          <label for="email" class="form-label">
+            이메일
+            <span class="errorMsg"></span>
+          </label>
+          <div class="input-row mb-2">
+            <input type="email" class="form-control" id="email" placeholder="Enter your email" name="email">
+            <button type="button" class="btn btn-emailauth" onclick="emailAuth();" id="emailAuthBtn" style="display:none;">인증하기</button>
+          </div>
+          <div class="authDiv" style="display:none;">
+            <div class="input-row align-center">
+              <input type="text" class="form-control" id="authCodeInput" placeholder="인증번호를 입력하세요.">
+              <div class="timer">3:00</div>
+            </div>
+            <button type="button" class="btn btn-emailinput" onclick="emailInput();" id="emailInputBtn" style="display:none;">입력완료</button>
+          </div>
+          <input type="hidden" id="emailValid" />
+        </div>
+        <!-- 이름 -->
+        <div class="form-group">
+          <label for="memberName" class="form-label">
+            이름
+            <span class="errorMsg"></span>
+          </label>
+          <input type="text" class="form-control" id="memberName" placeholder="Enter your name" name="memberName">
+          <input type="hidden" id="nameValid" />
+        </div>
+        <!-- 버튼 -->
+        <div class="btn-row">
+          <button type="submit" class="btn btn-submit" onclick="return isValid();">가입하기</button>
+          <button type="reset" class="btn btn-cancel" onclick="resetCheck();">취소</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+</body>
+</html>

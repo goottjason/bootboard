@@ -10,7 +10,10 @@ public class HomeController {
 
   @GetMapping("/")
   public String home() {
-    log.info("home으로 이동...");
+
+    log.info("index.html로 이동...");
+
+    // GetMapping 방식으로 templates의 index.html로 이동
     return "index";
   }
 }

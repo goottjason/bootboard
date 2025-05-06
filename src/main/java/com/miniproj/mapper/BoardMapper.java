@@ -21,6 +21,8 @@ public interface BoardMapper {
   @Update("update hboard set ref=#{boardNo} where boardNo = #{boardNo}")
   int updateRefToBoardNo(@Param("boardNo") int boardNo);
 
+
+  // MyBatis는 SQL 결과를 자바의 List로 반환할 때 기본적으로 java.util.ArrayList를 사용
   @Select("select * from hboard order by boardNo desc")
   List<HBoardVO> selectAllBoards();
 
