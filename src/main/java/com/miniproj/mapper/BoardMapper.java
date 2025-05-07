@@ -18,25 +18,46 @@ public interface BoardMapper {
   @Options(useGeneratedKeys = true, keyProperty = "boardNo")
   int insertNewBoard(HBoardDTO hBoardDTO);
 
-  @Update("update hboard set ref=#{boardNo} where boardNo = #{boardNo}")
+  @Update("update hboard set ref = #{boardNo} where boardNo = #{boardNo}")
   int updateRefToBoardNo(@Param("boardNo") int boardNo);
 
 
   // MyBatis는 SQL 결과를 자바의 List로 반환할 때 기본적으로 java.util.ArrayList를 사용
-  @Select("select * from hboard order by boardNo desc")
+  @Select("select * from hboard order by ref desc, refOrder asc")
   List<HBoardVO> selectAllBoards();
 
   // 파일 저장
-  @Update("""
-          insert into boardUpfiles (
-            boardNo, originalFileName, newFileName, thumbFileName, isImage, ext, size, base64, filePath
-            ) values (
-            #{boardNo}, #{originalFileName}, #{newFileName}, #{thumbFileName}, #{isImage}, #{ext}, #{size}, #{base64}, #{filePath}
-            )
-          """)
+  @Update(value = """
+    insert into boardUpfiles (boardNo, originalFileName, newFileName, thumbFileName, isImage, ext, size, base64, filePath)
+    values (#{boardNo}, #{originalFileName}, #{newFileName}, #{thumbFileName}, #{isImage}, #{ext}, #{size}, #{base64}, #{filePath})
+    """)
   int insertUploadFile(BoardUpFilesVODTO file);
 
   // resultMap 이용한 조인문 실행
   List<HBoardDetailInfo> selectBoardDetailInfoByBoardNo(int boardNo);
+
+  // 게시글 상세 조회 + 조회수 처리 관련 쿼리문
+  @Select("""
+          select ifnull((select datediff(now(), readWhen) from boardreadlog 
+          where readWho = #{readWho} and boardNo = #{boardNo}), -1)
+          """)
+  int selectDateDiffOrMinusOne(@Param("readWho") String readWho, @Param("boardNo") int boardNo);
+
+  @Insert("insert into boardreadlog (readWho, boardNo) values(#{readWho}, #{boardNo})")
+  int insertViewLog(@Param("readWho") String readWho, @Param("boardNo") int boardNo);
+
+  @Update("update boardreadlog set readWhen = now() where readWho = #{readWho} and boardNo = #{boardNo}")
+  void updateViewLog(@Param("readWho") String readWho, @Param("boardNo") int boardNo);
+
+  @Update("update hboard set readCount = readCount + 1 where boardNo = #{boardNo}")
+  int incrementReadCount(@Param("boardNo") int boardNo);
+
+
+  @Update("update hboard set refOrder = refOrder + 1 where ref = #{ref} and refOrder > #{refOrder}")
+  void updateRefOrder(@Param("ref") int ref, @Param("refOrder") int refOrder);
+
+  @Insert("insert into hboard(title, content, writer, ref, step, refOrder) values(#{title}, #{content}, #{writer}, #{ref}, #{step}, #{refOrder})")
+  @Options(useGeneratedKeys = true, keyProperty = "boardNo")
+  int insertReplyBoard(HBoardDTO replyBoard);
 
 }

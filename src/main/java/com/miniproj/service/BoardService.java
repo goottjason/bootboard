@@ -7,13 +7,13 @@ import com.miniproj.domain.HBoardVO;
 import java.util.List;
 
 public interface BoardService {
-  // 글 조회
+
   List<HBoardVO> getAllBoards();
 
   void saveBoardWithFiles(HBoardDTO board);
 
-  void viewBoardByNo(int boardNo);
+  List<HBoardDetailInfo> viewBoardByNo(int boardNo, String ipAddr);
 
-  // 글 상세 조회 (resultMap)
-  List<HBoardDetailInfo> viewBoardDetailInfoByNo(int boardNo);
+  void saveReply(HBoardDTO reply);
+
 }

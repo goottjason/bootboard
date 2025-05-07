@@ -34,6 +34,7 @@
       <result property="filePath" column="filePath" />
     </collection>
   </resultMap>
+
   <select id="selectBoardDetailInfoByBoardNo" resultMap="BoardDetailMap">
     select
     h.boardNo, h.title, h.content, h.writer, h.postDate, h.readCount, h.ref, h.step, h.refOrder,

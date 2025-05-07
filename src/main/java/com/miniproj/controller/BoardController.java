@@ -6,10 +6,11 @@ import com.miniproj.domain.HBoardDetailInfo;
 import com.miniproj.domain.HBoardVO;
 import com.miniproj.service.BoardService;
 import com.miniproj.util.FileUploadUtil;
+import com.miniproj.util.GetClientIPAddr;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -25,29 +26,34 @@ import java.util.List;
 import java.util.Map;
 
 
-// 웹요청을 처리하는 컨트롤러임을 명시, 없으면 웹 요청이 이 클래스의 메서드로 오지 않음
-@Controller
-// private static final Logger log = LoggerFactory.getLogger(클래스명.class);를 자동으로 만들어 줌
-// 없으면 로그를 직접 사용하려면 Logger 객체를 직접 선언하고 초기화해야 함
-@Slf4j
-// 롬복에서 제공, 주입받은 BoardService, FileUploadUtil에 대해 생성자를 자동으로 생성해 줌
-@RequiredArgsConstructor
-// 클래스에 붙이면, 해당 클래스의 모든 메서드에 기본 경로(/board)가 붙음
-@RequestMapping("/board")
+/*컨트롤러단에서 하는 일들
+  1) URI 매핑
+  2) view단에서 보내준 매개변수 수정
+  3) 데이터베이스에 대한 CRUD를 수행하기 위해 service단의 메서드 호출
+  4) 부가적으로 HttpServletRequest request, HttpServletResponse, HttpSession 등의 Servlet 객체를 이용 가능
+     (이 객체를 이용해 구현할 기능이 있으면 컨트롤러에서 구현함)*/
+
+
+
+@Controller // 웹요청을 처리하는 컨트롤러임을 명시, 없으면 웹요청이 이 클래스의 메서드로 안 옴
+@Slf4j // private static final Logger log = LoggerFactory.getLogger(클래스명.class) 자동생성
+@RequiredArgsConstructor // 롬복에서 제공, 주입받은 BoardService, FileUploadUtil에 대해 생성자 자동 생성
+@RequestMapping("/board") // 클래스에 붙이면, 해당 클래스의 모든 메서드에 기본 경로가 붙음
 public class BoardController {
+
+  /*롬복 애노테이션(@RequiredArgsConstructor) 덕분에 아래의 생성자 생성이 불필요해짐
+    @Autowired
+    public BoardController(BoardService boardService, FileUploadUtil fileUploadUtil) {
+      this.boardService = boardService;
+      this.fileUploadUtil = fileUploadUtil;
+    }*/
 
   private final BoardService boardService;
   private final FileUploadUtil fileUploadUtil;
 
-  /* @RequiredArgsConstructor 롬복 애노테이션 덕분에 생성자 불필요해짐
-  @Autowired
-  public BoardController(BoardService boardService, FileUploadUtil fileUploadUtil) {
-    this.boardService = boardService;
-    this.fileUploadUtil = fileUploadUtil;
-  }*/
+  // ============================== GetMapping ==============================
 
-
-
+  // 목록페이지
   @GetMapping("/list")
   public String list(Model model) {
     // select * ... 로 조회하여 HBoardVO 객체를 담은 리스트를 반환받음
@@ -59,6 +65,7 @@ public class BoardController {
     return "/board/list";
   }
 
+  // 글등록페이지
   @GetMapping("/register")
   public String registerGET(Model model) {
 
@@ -71,14 +78,50 @@ public class BoardController {
     return "/board/register";
   }
 
+  // 답글등록페이지
+  @GetMapping("/showReplyForm")
+  public String showReplyForm(@RequestParam(value="ref") int ref,
+                              @RequestParam(value="step") int step,
+                              @RequestParam(value="refOrder") int refOrder, Model model) {
+
+    HBoardDTO reply = new HBoardDTO();
+    reply.setRef(ref);
+    reply.setStep(step);
+    reply.setRefOrder(refOrder);
+    // 컨트롤러에서 뷰(화면)로 반환받은 데이터를 전달
+    model.addAttribute("reply", reply);
+
+    return "/board/replyForm";
+  }
+
+  // 글상세페이지
+  @GetMapping("/detail")
+  public String boardDetail(@RequestParam(value="boardNo") int boardNo, Model model, HttpServletRequest request) {
+
+    // 클라이언트의 IP주소를 얻어와서 서비스단에 전달
+    String ipAddr = GetClientIPAddr.getClientIP(request);
+
+    List<HBoardDetailInfo> detailInfos = boardService.viewBoardByNo(boardNo, ipAddr);
+
+    if (detailInfos.get(0).getUpfiles() == null) {
+      detailInfos.get(0).setUpfiles(Collections.emptyList());
+    }
+    // 컨트롤러에서 뷰(화면)로 반환받은 데이터를 전달
+    model.addAttribute("detail", detailInfos.get(0));
+
+    return "/board/detail";
+  }
+
+  // ============================== PostMapping ==============================
+
+  // 글저장(ajax에서 요청)
   @PostMapping("/register")
   @ResponseBody // REST API 방식 (반환값이 json 등으로 직접 전송됨)
-  // @ModelAttribute("board") --> th:object="${board}로 보낸 폼 데이터를 DTO 객체로 자동 바인딩
-  // @Valid --> 각 필드를 유효성 검사하여 실패한 필드와 메시지가 BindingResult 객체에 저장됨
-  // bindingResult는 바로 뒤에 붙여야하고, 에러가 있으면 반환해줌
   public ResponseEntity writeBoard(@Valid @ModelAttribute("board") HBoardDTO board, BindingResult bindingResult) throws IOException {
 
-    log.info("글 저장 요청 - HBoardDTO : {}", board);
+    /*@ModelAttribute("board") --> th:object="${board}로 보낸 폼 데이터를 DTO 객체로 자동 바인딩
+      @Valid --> 각 필드를 유효성 검사하여 실패한 필드와 메시지가 BindingResult 객체에 저장됨
+      BindingResult --> @ModelAttribute 바로 뒤에 붙여야하고, 에러가 있으면 반환해줌*/
 
     // hasErrors() : 전체 오류가 있는지 여부 반환하는 메서드
     if(bindingResult.hasErrors()) {
@@ -95,44 +138,43 @@ public class BoardController {
       }
       log.info("{}", errors);
 
-      // 컨트롤러에서 문자열, 객체 등을 반환하면 Spring이 자동으로 HTTP 응답을 만들어줌
-      // ResponseEntity를 사용하면 개발자가 응답의 상태코드(200, 400, 404), 헤더, 본문을 직접 지정 가능
-      // badRequest() : 400 응답을 보냄
-      // 응답 본문에 errors 객체를 보냄 (JSON 등으로 클라이언트(브라우저)에 전달)
+      /*컨트롤러에서 문자열, 객체 등을 반환하면 Spring이 자동으로 HTTP 응답을 만들어줌
+        ResponseEntity를 사용하면 개발자가 응답의 상태코드(200, 400, 404), 헤더, 본문을 직접 지정 가능
+        badRequest() : 400 응답을 보냄
+        응답 본문에 errors 객체를 보냄 (JSON 등으로 클라이언트(브라우저)에 전달)*/
+
       return ResponseEntity.badRequest().body(errors);
     }
 
-
-    log.info("HBoardDTO : {}", board);
-
-    // 롬복이 getter 메서드로 첨부파일 리스트를 saveFiles() 메서드에 전달
-    // saveFile() 메서드에서 하는 일
-    // --> 현재 날짜로 디렉토리를 생성, 파일 저장,
-    // --> 이미지이면 썸네일 이미지 및 Base64 저장, DTO를 담은 리스트 반환
     List<BoardUpFilesVODTO> upFilesVODTOS = fileUploadUtil.saveFiles(board.getMultipartFiles());
 
     // 실제 저장된 BoardUpFilesVODTO를 담은 리스트를 HBoardDTO에 담음
     board.setUpfiles(upFilesVODTOS);
 
-    // DTO를 저장
+    // DTO를 각 DB에 저장 (게시글 insert, boardNo로 ref를 update, boardUpfiles테이블에 파일관련 insert)
     boardService.saveBoardWithFiles(board);
 
-    // .build()만 호출하면, 본문이 없는 200 OK 응답이 만들어짐
-    return ResponseEntity.ok().build();
+    return ResponseEntity.ok().build(); // .build()만 호출하면, 본문이 없는 200 OK 응답이 만들어짐
   }
 
-  @GetMapping("/detail")
-  public String boardDetail(@RequestParam(value="boardNo") int boardNo, Model model) {
-    log.info("게시판 상태보기 호출... boardNo : {}", boardNo);
+  // 답글저장(폼태그에서 요청)
+  @PostMapping("/saveReply")
+  public String saveReply(@Valid @ModelAttribute("reply") HBoardDTO reply, BindingResult bindingResult) throws IOException {
 
-    // 글 상세 조회
-    List<HBoardDetailInfo> detailInfos = boardService.viewBoardDetailInfoByNo(boardNo);
-
-    if (detailInfos.get(0).getUpfiles() == null) {
-      detailInfos.get(0).setUpfiles(Collections.emptyList());
+    if(bindingResult.hasErrors()) {
+      return "/board/replyForm";
     }
-    log.info("{}", detailInfos.get(0));
-    model.addAttribute("detail", detailInfos.get(0));
-    return "/board/detail";
+
+    List<BoardUpFilesVODTO> upFilesVODTOS = fileUploadUtil.saveFiles(reply.getMultipartFiles());
+    reply.setUpfiles(upFilesVODTOS);
+
+    boardService.saveReply(reply);
+
+    return "redirect:/board/list";
   }
+
+
+
+
+
 }

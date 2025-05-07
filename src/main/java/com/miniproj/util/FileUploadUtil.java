@@ -35,6 +35,10 @@ public class FileUploadUtil {
   private String uploadUrlPath;
 
 
+  /*saveFiles() 메서드에서 하는 일들
+      1) 현재 날짜로 디렉토리를 생성, 파일 저장,
+      2) 이미지이면 썸네일 이미지 및 Base64 저장, DTO를 담은 리스트 반환*/
+
   // MultipartFile : Spring Web에서 파일 업로드를 쉽게 처리하기 위해 제공하는 인터페이스
   public List<BoardUpFilesVODTO> saveFiles(List<MultipartFile> multipartFileList) throws IOException {
 

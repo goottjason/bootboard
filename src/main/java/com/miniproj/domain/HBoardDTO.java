@@ -34,5 +34,9 @@ public class HBoardDTO {
   // 실제 저장된 파일 정보
   private List<BoardUpFilesVODTO> upfiles;
 
+  private int ref;
+  private int step;
+  private int refOrder;
+
 
 }

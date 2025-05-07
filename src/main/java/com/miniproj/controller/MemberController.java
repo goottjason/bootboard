@@ -30,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/member")
 @Slf4j
 @RequiredArgsConstructor
-public class memberController {
+public class MemberController {
   private final MemberService memberService;
   private final SendEmailService sendEmailService; // 메일전송담당객체 주입
 
