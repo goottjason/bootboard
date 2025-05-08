@@ -108,18 +108,16 @@ public class BoardServiceImpl implements BoardService {
       for(BoardUpFilesVODTO file : modifyBoard.getUpfiles()) {
         if(file.getFileStatus() == BoardUpFileStatus.INSERT) {
           // 새로 추가할 파일 insert
-          //boardMapper.insertUploadFile(file);
+          boardMapper.insertUploadFile(file);
         } else if(file.getFileStatus() == BoardUpFileStatus.DELETE) {
-          //boardMapper.deleteFileByNo(file.getFileNo());
+          boardMapper.deleteFileByNo(file.getFileNo());
 
           // 물리적 파일 삭제
           fileUploadUtil.deleteFiles(file.getFilePath());
           if (file.getIsImage()) {
             fileUploadUtil.deleteFiles(file.getThumbFileName());
           }
-
         }
-
       }
     }
 

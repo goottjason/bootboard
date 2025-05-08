@@ -139,6 +139,6 @@ public class FileUploadUtil {
     /*"C:/upload/"+ relativePath*/
     String fullPath = (baseDir + relativePath.replace(uploadUrlPath, "")).replace("/", File.separator);
     File file = new File(fullPath);
-    file.delete();
+    if (file.exists()) file.delete();
   }
 }
