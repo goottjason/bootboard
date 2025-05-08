@@ -10,6 +10,12 @@
 <div layout:fragment="content">
   <div class="row mt-3" th:object="${detail}">
     <div class="input-group mb-3">
+      <span class="input-group-text">boardNo</span>
+      <input type="text" class="form-control" th:field="*{boardNo}" placeholder="boardNo..." readonly>
+      <div th:if="${#fields.hasErrors('boardNo')}" th:errors="*{boardNo}"></div>
+      <div id="error-boardNo" class="error-message"></div>
+    </div>
+    <div class="input-group mb-3">
       <span class="input-group-text">Title</span>
       <input type="text" class="form-control" th:field="*{title}" placeholder="Title..." readonly>
       <div th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></div>
@@ -54,8 +60,10 @@
     <div class="my-4">
       <div class="float-end">
         <a th:href="@{/board/list}" class="btn btn-primary btn-lg">목록으로</a>
+        <a th:href="@{/board/list}" class="btn btn-primary btn-lg" id="modifyBtn" th:data-boardno="${detail.boardNo}">수정</a>
+        <a th:href="@{/board/list}" class="btn btn-primary btn-lg" id="removeBtn">삭제</a>
         <!--수정하기, 답글달기 등-->
-        <a th:href="@{/board/showReplyForm(
+        <a th:href="@{/board/showReplyForm(boardNo=${detail.boardNo},
           ref=${detail.getRef()}, step=${detail.getStep()}, refOrder=${detail.getRefOrder()})}" class="btn btn-primary btn-lg">답글작성</a>
 
       </div>
@@ -65,7 +73,14 @@
 
 </div>
 <script layout:fragment="script" th:inline="javascript">
+  $("#modifyBtn").on("click", function(e) {
+    e.preventDefault();
+    const boardNo = $(this).data("boardno");
+    const url = "/board/modify?boardNo=" + boardNo;
 
+    location.href = url;
+
+  })
 </script>
 </body>
 </html>

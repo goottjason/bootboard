@@ -1,21 +1,23 @@
 package com.miniproj.service;
 
-import com.miniproj.domain.BoardUpFilesVODTO;
-import com.miniproj.domain.HBoardDTO;
-import com.miniproj.domain.HBoardDetailInfo;
-import com.miniproj.domain.HBoardVO;
+import com.miniproj.domain.*;
 import com.miniproj.mapper.BoardMapper;
+import com.miniproj.util.FileUploadUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor // final이 붙은 것을 생성해주기 위해서...
+@Slf4j
 public class BoardServiceImpl implements BoardService {
 
   private final BoardMapper boardMapper;
+  private final FileUploadUtil fileUploadUtil;
 
   @Override
   public List<HBoardVO> getAllBoards() {
@@ -59,7 +61,7 @@ public class BoardServiceImpl implements BoardService {
           }
         }
       }
-    } else if (dateDiff > 0) {
+    } else if (dateDiff >= 24) {
       boardMapper.updateViewLog(ipAddr, boardNo);
       if (boardMapper.incrementReadCount(boardNo) == 1) {
         for(HBoardDetailInfo b : boardInfo) {
@@ -88,5 +90,40 @@ public class BoardServiceImpl implements BoardService {
         }
       }
     }
+  }
+
+  @Override
+  public List<HBoardDetailInfo> viewBoardDetailInfoByNo(int boardNo) {
+    return boardMapper.selectBoardDetailInfoByBoardNo(boardNo);
+  }
+
+  @Override
+  public boolean modifyBoard(HBoardDTO modifyBoard) throws IOException {
+
+
+
+    // 1. 게시글 제목, 내용 수정
+    if (boardMapper.updateBoard(modifyBoard) == 1) {
+      // 2. modifyFileList를 순회하면서 파일 처리 (DB)
+      for(BoardUpFilesVODTO file : modifyBoard.getUpfiles()) {
+        if(file.getFileStatus() == BoardUpFileStatus.INSERT) {
+          // 새로 추가할 파일 insert
+          //boardMapper.insertUploadFile(file);
+        } else if(file.getFileStatus() == BoardUpFileStatus.DELETE) {
+          //boardMapper.deleteFileByNo(file.getFileNo());
+
+          // 물리적 파일 삭제
+          fileUploadUtil.deleteFiles(file.getFilePath());
+          if (file.getIsImage()) {
+            fileUploadUtil.deleteFiles(file.getThumbFileName());
+          }
+
+        }
+
+      }
+    }
+
+    return false;
+
   }
 }

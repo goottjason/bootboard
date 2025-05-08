@@ -1,9 +1,6 @@
 package com.miniproj.controller;
 
-import com.miniproj.domain.BoardUpFilesVODTO;
-import com.miniproj.domain.HBoardDTO;
-import com.miniproj.domain.HBoardDetailInfo;
-import com.miniproj.domain.HBoardVO;
+import com.miniproj.domain.*;
 import com.miniproj.service.BoardService;
 import com.miniproj.util.FileUploadUtil;
 import com.miniproj.util.GetClientIPAddr;
@@ -20,10 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 /*컨트롤러단에서 하는 일들
@@ -50,6 +44,7 @@ public class BoardController {
 
   private final BoardService boardService;
   private final FileUploadUtil fileUploadUtil;
+  private List<BoardUpFilesVODTO> modifyFileList;
 
   // ============================== GetMapping ==============================
 
@@ -110,6 +105,20 @@ public class BoardController {
     model.addAttribute("detail", detailInfos.get(0));
 
     return "/board/detail";
+  }
+
+  // 게시글 수정하기
+  @GetMapping("/modify")
+  public String showModifyForm(@RequestParam(value="boardNo") int boardNo, Model model) {
+    log.info("{}", boardNo);
+
+    List<HBoardDetailInfo> detailInfos = boardService.viewBoardDetailInfoByNo(boardNo);
+
+    this.modifyFileList = detailInfos.get(0).getUpfiles();
+
+    model.addAttribute("board", detailInfos.get(0));
+
+    return "/board/modify";
   }
 
   // ============================== PostMapping ==============================
@@ -174,7 +183,71 @@ public class BoardController {
   }
 
 
+  @PostMapping(value = "/modifyRemoveFileCheck", produces = "application/json; charset=UTF-8")
+  public ResponseEntity<MyResponseWithoutData> modifyRemoveFileCheck(@RequestParam("removeFileNo") int removeFilePK) {
+    log.info("삭제하자 {}", removeFilePK);
+    for (BoardUpFilesVODTO file : modifyFileList) {
+      if(removeFilePK == file.getFileNo()) {
+        file.setFileStatus(BoardUpFileStatus.DELETE); // 삭제예정 표시
+      }
+    }
+    outputCurModifyFileList();
+    return ResponseEntity.ok(new MyResponseWithoutData(200, null, "success"));
+  }
 
+  private void outputCurModifyFileList() {
+    for(BoardUpFilesVODTO file : modifyFileList) {
+      log.info("outputCurModifyFileList : {}", file);
+    }
+  }
 
+  @PostMapping(value = "/cancelRemFiles")
+  public ResponseEntity<MyResponseWithoutData> cancelRemFiles() {
+    log.info("파일리스트의 모든 파일 삭제 취소처리");
 
+    for(BoardUpFilesVODTO file : modifyFileList) {
+      file.setFileStatus(null);
+      log.info("{}", file);
+    }
+
+    return ResponseEntity.ok(new MyResponseWithoutData(200, null, "success"));
+  }
+
+  @PostMapping(value = "/modifyBoardSave")
+  public String modifyBoardSave(@Valid @ModelAttribute HBoardDTO board, BindingResult bindingResult,
+                                @RequestParam(value = "modifyNewFile", required=false) MultipartFile[] modifyNewFile) throws IOException {
+    log.info("수정하자 {}", board);
+    for (MultipartFile multipartFile : modifyNewFile) {
+      log.info("{}", multipartFile);
+    }
+    // 새로 업로드 된 파일 저장 준비
+    if (modifyNewFile != null && modifyNewFile.length > 0) {
+      List<MultipartFile> fileList = new ArrayList<>();
+      for (MultipartFile file : modifyNewFile) {
+        if(!file.isEmpty()) {
+          fileList.add(file);
+        }
+      }
+      if(!fileList.isEmpty()) {
+        List<BoardUpFilesVODTO> savedFiles = fileUploadUtil.saveFiles(fileList);
+        for (BoardUpFilesVODTO fileInfo : savedFiles) {
+          fileInfo.setFileStatus(BoardUpFileStatus.INSERT);
+          modifyFileList.add(fileInfo);
+        }
+      }
+    }
+    outputCurModifyFileList();
+
+    // 최종 수정 저장
+    board.setUpfiles(modifyFileList);
+    boardService.modifyBoard(board);
+
+    return "redirect:/board/detail?boardNo=" + board.getBoardNo();
+
+/*    if(bindingResult.hasErrors()) {
+      log.info("{}", bindingResult);
+      return "/board/modifyBoardSave";
+    }
+    log.info("{}", board);*/
+  }
 }

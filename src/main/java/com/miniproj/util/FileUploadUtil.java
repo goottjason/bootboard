@@ -1,6 +1,5 @@
 package com.miniproj.util;
 
-import ch.qos.logback.core.util.FileUtil;
 import com.miniproj.domain.BoardUpFilesVODTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,8 +40,6 @@ public class FileUploadUtil {
 
   // MultipartFile : Spring Web에서 파일 업로드를 쉽게 처리하기 위해 제공하는 인터페이스
   public List<BoardUpFilesVODTO> saveFiles(List<MultipartFile> multipartFileList) throws IOException {
-
-
     List<BoardUpFilesVODTO> resultList = new ArrayList<>();
 
     // 첨부파일 리스트가 null이거나 비어있으면 빈 리스트 객체를 return
@@ -138,4 +135,10 @@ public class FileUploadUtil {
     return today.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
   }
 
+  public void deleteFiles(String relativePath) throws IOException {
+    /*"C:/upload/"+ relativePath*/
+    String fullPath = (baseDir + relativePath.replace(uploadUrlPath, "")).replace("/", File.separator);
+    File file = new File(fullPath);
+    file.delete();
+  }
 }

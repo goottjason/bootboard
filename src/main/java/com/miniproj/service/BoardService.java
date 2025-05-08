@@ -3,7 +3,9 @@ package com.miniproj.service;
 import com.miniproj.domain.HBoardDTO;
 import com.miniproj.domain.HBoardDetailInfo;
 import com.miniproj.domain.HBoardVO;
+import jakarta.validation.Valid;
 
+import java.io.IOException;
 import java.util.List;
 
 public interface BoardService {
@@ -16,4 +18,7 @@ public interface BoardService {
 
   void saveReply(HBoardDTO reply);
 
+  List<HBoardDetailInfo> viewBoardDetailInfoByNo(int boardNo);
+
+  boolean modifyBoard(@Valid HBoardDTO board) throws IOException;
 }

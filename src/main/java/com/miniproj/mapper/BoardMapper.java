@@ -38,7 +38,7 @@ public interface BoardMapper {
 
   // 게시글 상세 조회 + 조회수 처리 관련 쿼리문
   @Select("""
-          select ifnull((select datediff(now(), readWhen) from boardreadlog 
+          select ifnull((select timestampdiff(hour, readWhen, now()) from boardreadlog 
           where readWho = #{readWho} and boardNo = #{boardNo}), -1)
           """)
   int selectDateDiffOrMinusOne(@Param("readWho") String readWho, @Param("boardNo") int boardNo);
@@ -60,4 +60,9 @@ public interface BoardMapper {
   @Options(useGeneratedKeys = true, keyProperty = "boardNo")
   int insertReplyBoard(HBoardDTO replyBoard);
 
+  @Update("update hboard set title = #{title}, content=#{content} where boardNo = #{boardNo}")
+  int updateBoard(HBoardDTO modifyBoard);
+
+  @Delete("delete from boardupfiles where fileNo = #{fileNo}")
+  int deleteFileByNo(int fileNo);
 }
