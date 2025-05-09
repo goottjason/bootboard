@@ -59,12 +59,12 @@
 
     <div class="my-4">
       <div class="float-end">
-        <a th:href="@{/board/list}" class="btn btn-primary btn-lg">목록으로</a>
+        <a th:href="@{/board/list(pageNo=${pageNo})}" class="btn btn-primary btn-lg">목록으로</a>
         <a th:href="@{/board/list}" class="btn btn-primary btn-lg" id="modifyBtn" th:data-boardno="${detail.boardNo}">수정</a>
         <a th:href="@{/board/list}" class="btn btn-primary btn-lg" id="removeBtn">삭제</a>
         <!--수정하기, 답글달기 등-->
         <a th:href="@{/board/showReplyForm(boardNo=${detail.boardNo},
-          ref=${detail.getRef()}, step=${detail.getStep()}, refOrder=${detail.getRefOrder()})}" class="btn btn-primary btn-lg">답글작성</a>
+          ref=${detail.getRef()}, step=${detail.getStep()}, refOrder=${detail.getRefOrder()}, pageNo=${pageNo})}" class="btn btn-primary btn-lg">답글작성</a>
 
       </div>
     </div>

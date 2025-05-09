@@ -1,8 +1,6 @@
 package com.miniproj.service;
 
-import com.miniproj.domain.HBoardDTO;
-import com.miniproj.domain.HBoardDetailInfo;
-import com.miniproj.domain.HBoardVO;
+import com.miniproj.domain.*;
 import jakarta.validation.Valid;
 
 import java.io.IOException;
@@ -16,9 +14,14 @@ public interface BoardService {
 
   List<HBoardDetailInfo> viewBoardByNo(int boardNo, String ipAddr);
 
+  HBoardDTO getBoardDetail(int boardNo);
   void saveReply(HBoardDTO reply);
 
   List<HBoardDetailInfo> viewBoardDetailInfoByNo(int boardNo);
 
+  List<BoardUpFilesVODTO> viewFilesByBoardNo(int boardNo);
+
   boolean modifyBoard(@Valid HBoardDTO board) throws IOException;
+
+  PagingResponseDTO<HBoardPageDTO> getList(PagingRequestDTO pagingRequestDTO);
 }

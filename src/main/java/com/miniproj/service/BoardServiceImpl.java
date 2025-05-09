@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -74,6 +75,11 @@ public class BoardServiceImpl implements BoardService {
   }
 
   @Override
+  public HBoardDTO getBoardDetail(int boardNo) {
+    return boardMapper.selectBoardDetail(boardNo);
+  }
+
+  @Override
   @Transactional(rollbackFor = Exception.class)
   public void saveReply(HBoardDTO replyBoard) {
     // 답글 저장
@@ -98,16 +104,22 @@ public class BoardServiceImpl implements BoardService {
   }
 
   @Override
+  public List<BoardUpFilesVODTO> viewFilesByBoardNo(int boardNo) {
+    return boardMapper.selectFilesByBoardNo(boardNo);
+  }
+
+  @Override
   public boolean modifyBoard(HBoardDTO modifyBoard) throws IOException {
 
 
-
+    log.info("############# update : {}", modifyBoard);
     // 1. 게시글 제목, 내용 수정
     if (boardMapper.updateBoard(modifyBoard) == 1) {
       // 2. modifyFileList를 순회하면서 파일 처리 (DB)
       for(BoardUpFilesVODTO file : modifyBoard.getUpfiles()) {
         if(file.getFileStatus() == BoardUpFileStatus.INSERT) {
           // 새로 추가할 파일 insert
+          log.info("***************file : {} ", file);
           boardMapper.insertUploadFile(file);
         } else if(file.getFileStatus() == BoardUpFileStatus.DELETE) {
           boardMapper.deleteFileByNo(file.getFileNo());
@@ -123,5 +135,36 @@ public class BoardServiceImpl implements BoardService {
 
     return false;
 
+  }
+
+  @Override
+  public PagingResponseDTO<HBoardPageDTO> getList(PagingRequestDTO pagingRequestDTO) {
+    List<HBoardVO> voList = boardMapper.selectList(pagingRequestDTO);
+
+
+    List<HBoardPageDTO> dtoList = new ArrayList<>();
+    for (HBoardVO vo : voList) {
+      log.info("vo : {}", vo);
+      HBoardPageDTO dto = HBoardPageDTO.builder()
+        .boardNo(vo.getBoardNo())
+        .title(vo.getTitle())
+        .content(vo.getContent())
+        .writer(vo.getWriter())
+        .postDate(vo.getPostDate().toLocalDateTime())
+        .readCount(vo.getReadCount())
+        .ref(vo.getRef())
+        .step(vo.getStep())
+        .refOrder(vo.getRefOrder())
+        .build();
+      log.info("dto : {}", dto);
+      dtoList.add(dto);
+    }
+
+    int total = boardMapper.selectTotalCount();
+    return PagingResponseDTO.<HBoardPageDTO>allInfo()
+      .pagingRequestDTO(pagingRequestDTO)
+      .dtoList(dtoList)
+      .total(total)
+      .build();
   }
 }

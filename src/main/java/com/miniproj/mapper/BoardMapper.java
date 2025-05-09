@@ -1,9 +1,6 @@
 package com.miniproj.mapper;
 
-import com.miniproj.domain.BoardUpFilesVODTO;
-import com.miniproj.domain.HBoardDTO;
-import com.miniproj.domain.HBoardDetailInfo;
-import com.miniproj.domain.HBoardVO;
+import com.miniproj.domain.*;
 import org.apache.ibatis.annotations.*;
 
 import java.util.List;
@@ -65,4 +62,17 @@ public interface BoardMapper {
 
   @Delete("delete from boardupfiles where fileNo = #{fileNo}")
   int deleteFileByNo(int fileNo);
+
+  @Select("select boardNo, title, content, writer, postDate, readCount, ref, step, refOrder from hboard where boardNo = #{boardNo}")
+  HBoardDTO selectBoardDetail(int boardNo);
+
+  @Select("select * from boardupfiles where boardNo = #{boardNo}")
+  List<BoardUpFilesVODTO> selectFilesByBoardNo(int boardNo);
+
+  @Select("select * from hboard order by ref desc, refOrder asc limit #{skip}, #{pagingSize}")
+  List<HBoardVO> selectList(PagingRequestDTO pagingRequestDTO);
+
+  @Select("select count(*) from hboard")
+  int selectTotalCount();
+
 }

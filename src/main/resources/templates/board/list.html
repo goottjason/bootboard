@@ -22,20 +22,34 @@
       </tr>
     </thead>
     <tbody>
-      <tr th:each="board : ${boards}">
+      <tr th:each="board : ${responseDTO.dtoList}">
         <td th:text="${board.boardNo}">번호</td>
         <td>
           <div th:style="|margin-left: calc(${board.step} * 20px)|">
             <span th:if="${board.step > 0}">👉</span>
-            <a th:href="@{/board/detail(boardNo=${board.boardNo})}" th:text="${board.title}">제목</a>
+            <a th:href="@{/board/detail(boardNo=${board.boardNo}, pageNo=${responseDTO.pageNo})}" th:text="${board.title}">제목</a>
           </div>
         </td>
         <td th:text="${board.writer}">작성자</td>
-        <td th:text="${#dates.format(board.postDate, 'yyyy-MM-dd HH:mm')}">작성일</td>
+        <td th:text="${#temporals.format(board.postDate, 'yyyy-MM-dd HH:mm')}">작성일</td>
         <td th:text="${board.readCount}">조회수</td>
       </tr>
     </tbody>
   </table>
+  <div class="paging">
+    <ul class="pagination justify-content-center">
+      <li class="page-item" th:if="${responseDTO.prev}">
+        <a class="page-link" th:href="@{/board/list(pageNo=${responseDTO.start - responseDTO.pagingSize})}">Previous</a></li>
+
+      <div th:each="i : ${#numbers.sequence(responseDTO.start, responseDTO.end)}">
+        <li th:class="page-item" th:classappend="${i eq responseDTO.pageNo} ? active : ''">
+          <a class="page-link" th:href="@{/board/list(pageNo=${i})}" th:text="${i}"></a></li>
+      </div>
+
+      <li class="page-item" th:if="${responseDTO.next}">
+        <a class="page-link" th:href="@{/board/list(pageNo=${responseDTO.start+responseDTO.pagingSize})}">Next</a></li>
+    </ul>
+  </div>
 </div>
 </body>
 </html>
