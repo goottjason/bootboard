@@ -14,6 +14,7 @@
     <result property="ref" column="ref" />
     <result property="step" column="step" />
     <result property="refOrder" column="refOrder" />
+    <result property="isDelete" column="isDelete" />
 
     <association property="writer" javaType="com.miniproj.domain.MemberVO">
       <id property="memberId" column="writer" />
@@ -37,10 +38,48 @@
 
   <select id="selectBoardDetailInfoByBoardNo" resultMap="BoardDetailMap">
     select
-    h.boardNo, h.title, h.content, h.writer, h.postDate, h.readCount, h.ref, h.step, h.refOrder,
+    h.boardNo, h.title, h.content, h.writer, h.postDate, h.readCount, h.ref, h.step, h.refOrder, h.isDelete,
     f.*, m.memberName, m.email from hboard h
     left outer join boardupfiles f on h.boardNo = f.boardNo
     inner join member m on h.writer = m.memberId
     where h.boardNo = #{boardNo};
   </select>
+
+
+  <!--핑크: #dd4a68-->
+
+
+
+  <sql id="search">
+    <where>
+      <if test="types != null and types.size > 0">
+        <foreach item="type" collection="types" separator=" OR ">
+          <choose>
+            <when test="type == 't'.toString()">
+              title like concat('%', #{keyword}, '%')
+            </when>
+            <when test="type == 'c'.toString()">
+              content like concat('%', #{keyword}, '%')
+            </when>
+            <when test="type == 'w'.toString()">
+              writer like concat('%', #{keyword}, '%')
+            </when>
+          </choose>
+        </foreach>
+      </if>
+    </where>
+  </sql>
+
+  <select id="selectListWithSearch" resultType="HBoardVO">
+    SELECT * FROM hboard
+    <include refid="search" />
+    ORDER BY ref DESC, refOrder ASC LIMIT #{skip}, #{pagingSize}
+  </select>
+
+  <select id="selectTotalCountWithSearch" resultType="int">
+    SELECT count(*) FROM hboard
+    <include refid="search" />
+  </select>
+
+
 </mapper>

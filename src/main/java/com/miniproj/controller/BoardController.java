@@ -63,7 +63,7 @@ public class BoardController {
     return "/board/list";
   }*/
 
-  @GetMapping("/list")
+  /*@GetMapping("/list")
   public String list(PagingRequestDTO pagingRequestDTO, Model model) {
 
     log.info("pagingRequestDTO:{}", pagingRequestDTO);
@@ -74,7 +74,22 @@ public class BoardController {
     log.info("responseDTO:{}", responseDTO.getDtoList());
     // 반환받은 리스트를 컨트롤러에서 뷰(화면)로 데이터를 전달할 때 사용
     model.addAttribute("responseDTO", responseDTO);
+    model.addAttribute("pagingRequestDTO", pagingRequestDTO);
+    return "/board/list";
+  }*/
 
+  @GetMapping("/list")
+  public String list(PagingRequestDTO pagingRequestDTO, Model model) {
+
+    log.info("pagingRequestDTO:{}", pagingRequestDTO);
+
+    // select * ... 로 조회하여 HBoardVO 객체를 담은 리스트를 반환받음
+    PagingResponseDTO<HBoardPageDTO> responseDTO  = boardService.getListWithSearch(pagingRequestDTO);
+
+    log.info("responseDTO:{}", responseDTO.getDtoList());
+    // 반환받은 리스트를 컨트롤러에서 뷰(화면)로 데이터를 전달할 때 사용
+    model.addAttribute("responseDTO", responseDTO);
+    // model.addAttribute("pagingRequestDTO", pagingRequestDTO);
     return "/board/list";
   }
 
@@ -109,26 +124,42 @@ public class BoardController {
 
   // 글상세페이지
   @GetMapping("/detail")
-  public String boardDetail(@RequestParam(value="boardNo") int boardNo, @RequestParam(value = "pageNo") int pageNo, Model model, HttpServletRequest request) {
+  public String boardDetail(@RequestParam(value="boardNo", required = false, defaultValue = "-1") int boardNo,
+                            @RequestParam(value = "pageNo") int pageNo,
+                            PagingRequestDTO pagingRequestDTO, Model model,
+                            HttpServletRequest request, RedirectAttributes redirectAttributes) {
+
+    // 잘못된 요청(Bod Request)
+    if (boardNo == -1) {
+      redirectAttributes.addFlashAttribute("error", "정상적인 주소로 접근해주세요.");
+      return "redirect:/board/list";
+    }
 
     // 클라이언트의 IP주소를 얻어와서 서비스단에 전달
     String ipAddr = GetClientIPAddr.getClientIP(request);
 
     List<HBoardDetailInfo> detailInfos = boardService.viewBoardByNo(boardNo, ipAddr);
 
+    log.info("detailInfos : {}", detailInfos.get(0));
+    if("Y".equals(detailInfos.get(0).getIsDelete())) {
+      redirectAttributes.addFlashAttribute("error", "삭제되거나 존재되지 않는 글입니다.");
+      return "redirect:/board/list";
+    }
+
     if (detailInfos.get(0).getUpfiles() == null) {
       detailInfos.get(0).setUpfiles(Collections.emptyList());
     }
     // 컨트롤러에서 뷰(화면)로 반환받은 데이터를 전달
     model.addAttribute("detail", detailInfos.get(0));
-    model.addAttribute("pageNo", pageNo);
+    model.addAttribute("pagingRequestDTO", pagingRequestDTO);
 
     return "/board/detail";
   }
 
   // 게시글 수정하기
   @GetMapping("/modify")
-  public String showModifyForm(@RequestParam(value="boardNo") int boardNo, Model model) {
+  public String showModifyForm(@RequestParam(value="boardNo") int boardNo,
+                               PagingRequestDTO pagingRequestDTO, Model model) {
     log.info("{}", boardNo);
 
     /*List<HBoardDetailInfo> detailInfos = boardService.viewBoardDetailInfoByNo(boardNo);
@@ -144,6 +175,7 @@ public class BoardController {
     log.info("################ {}", board);
 
     model.addAttribute("board", board);
+    model.addAttribute("pagingRequestDTO", pagingRequestDTO);
 
     return "/board/modify";
   }
@@ -242,9 +274,10 @@ public class BoardController {
 
   @PostMapping(value = "/modifyBoardSave")
   public String modifyBoardSave(@Valid @ModelAttribute("board") HBoardDTO board, BindingResult bindingResult,
-                                @RequestParam(value = "modifyNewFile", required=false) MultipartFile[] modifyNewFile, RedirectAttributes redirectAttributes) throws IOException {
+                                @ModelAttribute("pagingRequestDTO") PagingRequestDTO pagingRequestDTO,
+                                @RequestParam(value = "modifyNewFile", required=false) MultipartFile[] modifyNewFile, RedirectAttributes redirectAttributes) {
     log.info("수정하자 {}", board);
-
+    String link = pagingRequestDTO.getLink();
     if(bindingResult.hasErrors()) {
 
       // "redirect:/board/detail?boardNo=" + board.getBoardNo();
@@ -254,38 +287,71 @@ public class BoardController {
       for (ObjectError error :bindingResult.getAllErrors()) {
         log.info("에러메시지 {}", error.getDefaultMessage());
       }
-      return "redirect:/board/modify?boardNo=" + board.getBoardNo();
+      return "redirect:/board/modify?boardNo=" + board.getBoardNo() + "&" + link;
     }
 
     // 새로 업로드 된 파일 저장 준비
-    if (modifyNewFile != null && modifyNewFile.length > 0) {
-      List<MultipartFile> fileList = new ArrayList<>();
-      for (MultipartFile file : modifyNewFile) {
-        if(!file.isEmpty()) {
-          fileList.add(file);
+    try {
+      if (modifyNewFile != null && modifyNewFile.length > 0) {
+        List<MultipartFile> fileList = new ArrayList<>();
+        for (MultipartFile file : modifyNewFile) {
+          if(!file.isEmpty()) {
+            fileList.add(file);
+          }
+        }
+        if(!fileList.isEmpty()) {
+          List<BoardUpFilesVODTO> savedFiles = fileUploadUtil.saveFiles(fileList);
+          for (BoardUpFilesVODTO fileInfo : savedFiles) {
+            fileInfo.setFileStatus(BoardUpFileStatus.INSERT);
+            fileInfo.setBoardNo(board.getBoardNo());
+            modifyFileList.add(fileInfo);
+          }
         }
       }
-      if(!fileList.isEmpty()) {
-        List<BoardUpFilesVODTO> savedFiles = fileUploadUtil.saveFiles(fileList);
-        for (BoardUpFilesVODTO fileInfo : savedFiles) {
-          fileInfo.setFileStatus(BoardUpFileStatus.INSERT);
-          fileInfo.setBoardNo(board.getBoardNo());
-          modifyFileList.add(fileInfo);
-        }
-      }
+      outputCurModifyFileList();
+
+      // 최종 수정 저장
+      board.setUpfiles(modifyFileList);
+      boardService.modifyBoard(board);
+      redirectAttributes.addAttribute("status", "success");
+    } catch (Exception e) {
+      log.error("게시글 수정 실패", e);
+      redirectAttributes.addAttribute("status", "failure");
     }
-    outputCurModifyFileList();
 
-    // 최종 수정 저장
-    board.setUpfiles(modifyFileList);
-    boardService.modifyBoard(board);
-
-    return "redirect:/board/detail?boardNo=" + board.getBoardNo();
+    return "redirect:/board/detail?boardNo=" + board.getBoardNo() +"&" + link;
 
 /*    if(bindingResult.hasErrors()) {
       log.info("{}", bindingResult);
       return "/board/modifyBoardSave";
     }
     log.info("{}", board);*/
+  }
+
+  @PostMapping("/removeBoard")
+  public String removeBoard(@RequestParam("boardNo") int boardNo, RedirectAttributes redirectAttributes) {
+    log.info("{}번 글을 삭제하자...", boardNo);
+
+    List<BoardUpFilesVODTO> upFilesVODTOS = boardService.removeBoard(boardNo);
+
+    try {
+      if(upFilesVODTOS != null) {
+        // 하드에서 삭제해주면 됨
+        for (BoardUpFilesVODTO upFilesVODTO : upFilesVODTOS) {
+          log.info("{}", upFilesVODTO);
+          fileUploadUtil.deleteFile(upFilesVODTO.getFilePath());
+          if (upFilesVODTO.getIsImage()) {
+            fileUploadUtil.deleteFile(upFilesVODTO.getThumbFileName());
+          }
+        }
+        redirectAttributes.addAttribute("status", "success");
+      } else {
+        // 하드에서 삭제할건 따로 없는...?
+      }
+    } catch (Exception e) {
+      redirectAttributes.addAttribute("status", "failure");
+    }
+
+    return "redirect:/board/list";
   }
 }

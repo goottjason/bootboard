@@ -125,9 +125,9 @@ public class BoardServiceImpl implements BoardService {
           boardMapper.deleteFileByNo(file.getFileNo());
 
           // 물리적 파일 삭제
-          fileUploadUtil.deleteFiles(file.getFilePath());
+          fileUploadUtil.deleteFile(file.getFilePath());
           if (file.getIsImage()) {
-            fileUploadUtil.deleteFiles(file.getThumbFileName());
+            fileUploadUtil.deleteFile(file.getThumbFileName());
           }
         }
       }
@@ -155,12 +155,66 @@ public class BoardServiceImpl implements BoardService {
         .ref(vo.getRef())
         .step(vo.getStep())
         .refOrder(vo.getRefOrder())
+        .isDelete(vo.getIsDelete())
         .build();
       log.info("dto : {}", dto);
       dtoList.add(dto);
     }
 
     int total = boardMapper.selectTotalCount();
+    return PagingResponseDTO.<HBoardPageDTO>allInfo()
+      .pagingRequestDTO(pagingRequestDTO)
+      .dtoList(dtoList)
+      .total(total)
+      .build();
+  }
+
+  @Override
+  @Transactional(rollbackFor = Exception.class) // 에러가 나면 자동롤백을 해줘라
+  public List<BoardUpFilesVODTO> removeBoard(int boardNo) {
+    // 1) 실제 파일을 하드에서도 삭제해야하므로, 삭제 하기 전 첨부파일 정보 조회
+    List<BoardUpFilesVODTO> fileList = boardMapper.selectFilesByBoardNo(boardNo);
+
+    log.info("fileList : {}", fileList == null); // 비어있으면 빈배열로 옴
+    log.info("fileList : {}", fileList.isEmpty()); // 비어있으면 빈배열로 옴
+
+    // 2) boardNo번 글의 첨부파일 정보를 DB에서 삭제
+    boardMapper.deleteAllBoardUpFiles(boardNo);
+
+    // 3) boardNo번 글을 삭제 (soft delete 방식 : isDelete = "Y"로 업데이트)
+    boardMapper.deleteBoardByBoardNo(boardNo);
+
+    if (!fileList.isEmpty()) {
+      return fileList;
+    } else {
+      return null;
+    }
+  }
+
+  @Override
+  public PagingResponseDTO<HBoardPageDTO> getListWithSearch(PagingRequestDTO pagingRequestDTO) {
+    List<HBoardVO> voList = boardMapper.selectListWithSearch(pagingRequestDTO);
+
+    List<HBoardPageDTO> dtoList = new ArrayList<>();
+    for (HBoardVO vo : voList) {
+      log.info("vo : {}", vo);
+      HBoardPageDTO dto = HBoardPageDTO.builder()
+        .boardNo(vo.getBoardNo())
+        .title(vo.getTitle())
+        .content(vo.getContent())
+        .writer(vo.getWriter())
+        .postDate(vo.getPostDate().toLocalDateTime())
+        .readCount(vo.getReadCount())
+        .ref(vo.getRef())
+        .step(vo.getStep())
+        .refOrder(vo.getRefOrder())
+        .isDelete(vo.getIsDelete())
+        .build();
+      log.info("dto : {}", dto);
+      dtoList.add(dto);
+    }
+
+    int total = boardMapper.selectTotalCountWithSearch(pagingRequestDTO);
     return PagingResponseDTO.<HBoardPageDTO>allInfo()
       .pagingRequestDTO(pagingRequestDTO)
       .dtoList(dtoList)

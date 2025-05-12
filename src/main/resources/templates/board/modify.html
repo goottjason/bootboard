@@ -38,6 +38,11 @@
       <input type="hidden" th:field="*{ref}">
       <input type="hidden" th:field="*{step}">
       <input type="hidden" th:field="*{refOrder}">
+
+      <input type="hidden" name="pageNo" th:value="${pagingRequestDTO.pageNo}">
+      <input type="hidden" name="pagingSize" th:value="${pagingRequestDTO.pagingSize}">
+      <!--<input type="hidden" name="pagingRequestDTO" th:value="${pagingRequestDTO}">-->
+
     </div>
     <div class="input-group mb-3">
       <span class="input-group-text">postDate</span>
@@ -93,7 +98,7 @@
       <div class="float-end">
         <button type="submit" class="btn btn-primary btn-lg">Submit</button>
         <button type="reset" class="btn btn-primary btn-lg">Reset</button>
-        <a th:href="@{/board/list}" class="btn btn-primary btn-lg">목록으로</a>
+        <a th:href="|@{/board/list}?${pagingRequestDTO.link}|" class="btn btn-primary btn-lg">목록으로</a>
 
       </div>
     </div>

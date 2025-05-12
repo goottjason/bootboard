@@ -123,6 +123,7 @@ public class FileUploadUtil {
 
     }
 
+    // throw new IOException("예외발생");
     return resultList;
   }
 
@@ -135,7 +136,7 @@ public class FileUploadUtil {
     return today.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
   }
 
-  public void deleteFiles(String relativePath) throws IOException {
+  public void deleteFile(String relativePath) throws IOException {
     /*"C:/upload/"+ relativePath*/
     String fullPath = (baseDir + relativePath.replace(uploadUrlPath, "")).replace("/", File.separator);
     File file = new File(fullPath);

@@ -59,8 +59,9 @@
 
     <div class="my-4">
       <div class="float-end">
-        <a th:href="@{/board/list(pageNo=${pageNo})}" class="btn btn-primary btn-lg">목록으로</a>
-        <a th:href="@{/board/list}" class="btn btn-primary btn-lg" id="modifyBtn" th:data-boardno="${detail.boardNo}">수정</a>
+        <a th:href="|@{/board/list}?${pagingRequestDTO.link}|" class="btn btn-primary btn-lg">목록으로</a>
+        <a th:href="@{/board/list}" class="btn btn-primary btn-lg" id="modifyBtn" th:data-boardno="${detail.boardNo}" th:data-link="${pagingRequestDTO.link}">수정</a>
+        <!--<a th:href="@{/board/list}" class="btn btn-primary btn-lg" id="modifyBtn" th:data-boardno="${detail.boardNo}" th:onclick="|location.href='/board/modify(boardNo=${detail.boardNo})&${pagingRequestDTO.link}'|">수정</a>-->
         <a th:href="@{/board/list}" class="btn btn-primary btn-lg" id="removeBtn">삭제</a>
         <!--수정하기, 답글달기 등-->
         <a th:href="@{/board/showReplyForm(boardNo=${detail.boardNo},
@@ -71,16 +72,93 @@
 
   </div>
 
-</div>
+
+
+  <!-- Toast -->
+  <div id="toastMessage" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header">
+      <!--<img src="..." class="rounded me-2" alt="...">-->
+      <strong class="me-auto">알림</strong>
+      <small>now</small>
+      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body">
+      Hello, world! This is a toast message.
+    </div>
+  </div> <!-- End: Toast -->
+
+  <!-- Modal -->
+  <div id="deleteModal" class="modal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form th:action="@{/board/removeBoard}" method="post">
+          <input type="hidden" name="boardNo" th:value="${detail.boardNo}">
+          <div class="modal-header">
+            <h5 class="modal-title">알림</h5>
+            <button type="button" class="btn-close closeModalBtn" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p>[[${detail.boardNo}]]번 글을 정말 삭제하시겠습니까?</p>
+          </div>
+          <div class="modal-footer">
+
+            <button type="submit" class="btn btn-danger">삭제</button>
+            <button type="button" class="btn btn-secondary closeModalBtn" data-bs-dismiss="modal">취소</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div> <!-- End: Modal -->
+
+</div> <!-- End: fragment="content" -->
+
+
 <script layout:fragment="script" th:inline="javascript">
-  $("#modifyBtn").on("click", function(e) {
-    e.preventDefault();
-    const boardNo = $(this).data("boardno");
-    const url = "/board/modify?boardNo=" + boardNo;
 
-    location.href = url;
+  /* let status = [[${param.status}]]; */
+  $(function() {
 
-  })
+    $("#removeBtn").on("click", function(e) {
+      e.preventDefault();
+      $("#deleteModal").show();
+
+    });
+    $(".closeModalBtn").on("click", function(e) {
+      e.preventDefault();
+      $("#deleteModal").hide();
+    })
+
+    $("#modifyBtn").on("click", function(e) {
+      e.preventDefault();
+      const boardNo = $(this).data("boardno");
+      let link = $(this).data("link");
+      let url = "/board/modify?boardNo=" + boardNo;
+      if(link) {
+        url += `&${link}`;
+      }
+      location.href = url;
+    });
+
+    const urlSearchParams = new URLSearchParams(window.location.search);
+    const status = urlSearchParams.get("status");
+    console.log(status);
+    if(status == "success") {
+      $(".toast-body").html("수정완료");
+      $("#toastMessage").show();
+      // 2초 후에 toast 메시지 닫기
+      setTimeout(function() {
+        $("#toastMessage").fadeOut();
+      }, 2000);
+    } else if (status == "failure") {
+      $(".toast-body").html("수정실패");
+      $("#toastMessage").show();
+      // 2초 후에 toast 메시지 닫기
+      setTimeout(function() {
+        $("#toastMessage").fadeOut();
+      }, 2000);
+    }
+  });
+
 </script>
 </body>
 </html>

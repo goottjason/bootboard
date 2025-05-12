@@ -24,4 +24,8 @@ public interface BoardService {
   boolean modifyBoard(@Valid HBoardDTO board) throws IOException;
 
   PagingResponseDTO<HBoardPageDTO> getList(PagingRequestDTO pagingRequestDTO);
+
+  List<BoardUpFilesVODTO> removeBoard(int boardNo);
+
+  PagingResponseDTO<HBoardPageDTO> getListWithSearch(PagingRequestDTO pagingRequestDTO);
 }

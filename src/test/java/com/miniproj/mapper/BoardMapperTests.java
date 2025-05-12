@@ -115,5 +115,25 @@ public class BoardMapperTests {
     log.info("{}", (int)(Math.ceil(1031/10.0)));
 
   }
+
+  @Test
+  public void testSearch() {
+
+    PagingRequestDTO pagingRequestDTO = PagingRequestDTO.builder()
+      .pageNo(1)
+      .pagingSize(10)
+      // .type("tc")
+      .keyword("hong1234")
+      .build();
+
+    log.info("pagingRequestDTO: {}", pagingRequestDTO);
+    log.info("getTypes = {}", pagingRequestDTO.getTypes());
+
+    List<HBoardVO> HBoardVOS = boardMapper.selectListWithSearch(pagingRequestDTO);
+    for (HBoardVO hBoardVO : HBoardVOS) {
+      log.info("{}", hBoardVO);
+    }
+
+  }
 }
 

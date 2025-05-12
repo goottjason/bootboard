@@ -23,6 +23,9 @@ public interface BoardMapper {
   @Select("select * from hboard order by ref desc, refOrder asc")
   List<HBoardVO> selectAllBoards();
 
+  List<HBoardVO> selectListWithSearch(PagingRequestDTO pagingRequestDTO);
+
+
   // 파일 저장
   @Update(value = """
     insert into boardUpfiles (boardNo, originalFileName, newFileName, thumbFileName, isImage, ext, size, base64, filePath)
@@ -74,5 +77,15 @@ public interface BoardMapper {
 
   @Select("select count(*) from hboard")
   int selectTotalCount();
+
+  @Delete("DELETE FROM boardupfiles WHERE boardNo = #{boardNo}")
+  void deleteAllBoardUpFiles(int boardNo);
+
+  @Update("UPDATE hboard SET isDelete = 'Y', title = '', content='' WHERE boardNo = #{boardNo}")
+  void deleteBoardByBoardNo(int boardNo);
+
+
+  // 검색된 총 글의 개수
+  int selectTotalCountWithSearch(PagingRequestDTO pagingRequestDTO);
 
 }
