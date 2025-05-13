@@ -70,6 +70,18 @@ public class PagingRequestDTO {
     } else {
       return Arrays.asList(type.split("")); // of는 뭐지?
     }
+  }
 
+  public String generateLinkExceptPageNo() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("pagingSize=").append(pagingSize);
+
+    if(type != null && !type.isBlank()) { // isEmpty 이거나 whitespace인 경우, true 반환
+      sb.append("&type=").append(type);
+    }
+    if(keyword != null && !keyword.isBlank()) {
+      sb.append("&keyword=").append(keyword);
+    }
+    return sb.toString();
   }
 }

@@ -16,14 +16,14 @@
   <!-- 검색 : 검색결과도 페이징해서 와야 함... -->
   <form action="/board/list" method="get">
     <select class="form-select" name="type">
-      <option value="">=== 검색타입 === </option>
-      <option value="t">제목</option>
-      <option value="c">내용</option>
-      <option value="w">작성자</option>
-      <option value="tc">제목+내용</option>
-      <option value="tcw">제목+내용+작성자</option>
+      <!--<option value="">=== 검색타입 === </option>-->
+      <option value="t" th:selected="${pagingRequestDTO.type == 't'}">제목</option>
+      <option value="c" th:selected="${pagingRequestDTO.type == 'c'}">내용</option>
+      <option value="w" th:selected="${pagingRequestDTO.type == 'w'}">작성자</option>
+      <option value="tc" th:selected="${pagingRequestDTO.type == 'tc'}">제목+내용</option>
+      <option value="tcw" th:selected="${pagingRequestDTO.type == 'tcw'}">제목+내용+작성자</option>
     </select>
-    <input type="text" class="form-control" name="keyword" placeholder="검색어 입력...">
+    <input type="text" class="form-control" name="keyword" placeholder="검색어 입력..." th:value="${pagingRequestDTO.keyword}">
     <button type="submit" class="btn btn-primary">검색</button>
     <button type="reset" class="btn btn-primary">초기화</button>
   </form>
@@ -40,7 +40,8 @@
     </tr>
     </thead>
     <tbody>
-    <tr th:each="board : ${responseDTO.dtoList}">
+    <tr th:if="${#lists.isEmpty(responseDTO.dtoList)}"><td colspan="8" class="text-center">검색결과없음</td></tr>
+    <tr th:if="${!#lists.isEmpty(responseDTO.dtoList)}" th:each="board : ${responseDTO.dtoList}">
       <td th:text="${board.boardNo}">번호</td>
       <td>
         <!-- 삭제된 글 표시 -->
@@ -56,6 +57,7 @@
     </tr>
     </tbody>
   </table>
+  <!-- ◆◆◆ 페이지영역 ◆◆◆ -->
   <div class="paging">
     <ul class="pagination justify-content-center">
       <li class="page-item" th:classappend="${responseDTO.pageNo == 1} ? 'disabled'">
@@ -67,7 +69,7 @@
 
       <div th:each="i : ${#numbers.sequence(responseDTO.start, responseDTO.end)}">
         <li th:class="page-item" th:classappend="${i eq responseDTO.pageNo} ? active : ''">
-          <a class="page-link" th:href="@{/board/list(pageNo=${i})}" th:text="${i}"></a></li>
+          <a class="page-link" th:href="|@{/board/list(pageNo=${i})}&${pagingRequestDTO.generateLinkExceptPageNo()}|" th:text="${i}"></a></li>
       </div>
 
       <li class="page-item" th:classappend="${!responseDTO.next} ? 'disabled'">

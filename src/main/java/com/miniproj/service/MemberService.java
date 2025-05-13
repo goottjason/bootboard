@@ -1,5 +1,6 @@
 package com.miniproj.service;
 
+import com.miniproj.domain.Member;
 import com.miniproj.domain.MemberDTO;
 import com.miniproj.domain.MemberUpdateDTO;
 
@@ -16,4 +17,7 @@ public interface MemberService {
 
   int uniqueEmailCheck(String email);
   MemberDTO selectMemberById(String memberId);
+
+
+  void register(Member member);
 }

@@ -1,3 +1,4 @@
+/*
 package com.miniproj.controller;
 
 import java.io.IOException;
@@ -30,7 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/member")
 @Slf4j
 @RequiredArgsConstructor
-public class MemberController {
+public class MemberController2 {
   private final MemberService memberService;
   private final SendEmailService sendEmailService; // 메일전송담당객체 주입
 
@@ -246,3 +247,4 @@ public class MemberController {
     return new ResponseEntity<String>("success", HttpStatus.OK);
   }
 }
+*/

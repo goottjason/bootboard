@@ -36,6 +36,8 @@ public class PagingResponseDTO<T> {
     // this.end > this.last ? this.last : this.end;
     this.end = Math.min(this.end, this.last);
 
+    if(this.end == 0) this.end = 1;
+
     this.prev = this.start > 1;
     this.next = this.end < this.last;
 

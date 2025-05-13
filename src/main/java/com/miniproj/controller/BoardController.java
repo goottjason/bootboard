@@ -227,7 +227,7 @@ public class BoardController {
 
   // 답글저장(폼태그에서 요청)
   @PostMapping("/saveReply")
-  public String saveReply(@Valid @ModelAttribute("reply") HBoardDTO reply, BindingResult bindingResult, @RequestParam("pageNo") int pageNo) throws IOException {
+  public String saveReply(@Valid @ModelAttribute("reply") HBoardDTO reply, BindingResult bindingResult) throws IOException {
 
     if(bindingResult.hasErrors()) {
       return "/board/replyForm";
@@ -238,7 +238,7 @@ public class BoardController {
 
     boardService.saveReply(reply);
 
-    return "redirect:/board/list?pageNo=" + pageNo;
+    return "redirect:/board/list";
   }
 
 

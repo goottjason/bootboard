@@ -2,6 +2,7 @@ package com.miniproj.service;
 
 import com.miniproj.domain.*;
 import com.miniproj.mapper.BoardMapper;
+import com.miniproj.mapper.MemberMapper;
 import com.miniproj.util.FileUploadUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +19,7 @@ import java.util.List;
 public class BoardServiceImpl implements BoardService {
 
   private final BoardMapper boardMapper;
+  private final MemberMapper memberMapper;
   private final FileUploadUtil fileUploadUtil;
 
   @Override
@@ -26,7 +28,7 @@ public class BoardServiceImpl implements BoardService {
   }
 
   @Override
-  @Transactional // 스프링에서 도중에 뭔가 에러나면 자동으로 롤백시켜줌
+  @Transactional(rollbackFor = Exception.class) // 스프링에서 도중에 뭔가 에러나면 자동으로 롤백시켜줌
   public void saveBoardWithFiles(HBoardDTO board) {
 
     // 1. 게시글 저장
@@ -40,6 +42,17 @@ public class BoardServiceImpl implements BoardService {
         boardMapper.insertUploadFile(file);
       }
     }
+    // 3. 포인트 몇 점 주어야 하는지?
+    PointWhy pointWhy = PointWhy.WRITE;
+    int pointScore = memberMapper.selectPointScore(pointWhy);
+    String pointWho = board.getWriter();
+
+    // 4. 누구한테 언제 몇점 주었는지 포인트 로그 기록
+    memberMapper.insertPointLog(pointWho, pointWhy, pointScore);
+
+    // 5. 포인트 업데이트
+    memberMapper.updateMemberPoint(pointWho, pointScore);
+
   }
 
 

@@ -1,12 +1,11 @@
 package com.miniproj.mapper;
 
-import org.apache.ibatis.annotations.Insert;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
+import com.miniproj.domain.Member;
+import com.miniproj.domain.PointWhy;
+import org.apache.ibatis.annotations.*;
 
 import com.miniproj.domain.MemberDTO;
 import com.miniproj.domain.MemberUpdateDTO;
-import org.apache.ibatis.annotations.Select;
 
 @Mapper
 public interface MemberMapper {
@@ -30,5 +29,21 @@ public interface MemberMapper {
 
 
   MemberDTO selectMemberById(String memberId);
-  
+
+
+  @Select("select pointScore from pointdef where pointWhy = #{pointWhy}")
+  int selectPointScore(PointWhy pointWhy);
+
+  @Insert("insert into pointlog(pointWho, pointWhy, pointScore) values (#{pointWho}, #{pointWhy}, #{pointScore})")
+  int insertPointLog(@Param("pointWho") String pointWho, @Param("pointWhy") PointWhy pointWhy, @Param("pointScore") int pointScore);
+
+  @Update("update member set memberPoint = memberPoint + #{memberPoint} where memberId = #{memberId}")
+  int updateMemberPoint(@Param("memberId") String memberId, @Param("memberPoint") int memberPoint);
+
+  @Insert("insert into member (memberId, memberPwd, memberName, mobile, email, memberImg, gender) values (#{memberId}, #{memberPwd}, #{memberName}, #{mobile}, #{email}, #{memberImg}, #{gender})")
+  int insertMemberByMember(Member member);
+
+  @Select("select * from member where memberId = #{memberId]}")
+  Member findMemberById(String memberId);
 }
+

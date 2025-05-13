@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org"
+      layout:decorate="~{layout/basic.html}">
+
+<head>
+  <meta charset="UTF-8">
+  <title>To-Do</title>
+  <style>
+    body {
+      background:#f8fafc;
+      font-family:'Pretendard','Inter','Apple SD Gothic Neo',sans-serif;
+    }
+    .container {
+      max-width:380px;
+      margin:60px auto;
+      background:#fff;
+      border-radius:12px;
+      box-shadow:0 2px 16px rgba(40,60,90,0.08);
+      padding:36px 32px 28px 32px;
+    }
+    .row {
+      margin:0;
+    }
+    h1 {
+      font-size:2rem;
+      font-weight:700;
+      color:#0f1d41;
+      margin-bottom:28px;
+      text-align:center;
+    }
+    .authFailMsg {
+      background:#ffe6e6;
+      color:#d32f2f;
+      border-radius:6px;
+      padding:10px 14px;
+      margin-bottom:18px;
+      font-size:15px;
+      text-align:center;
+    }
+    .signupStatus {
+      background:#e8f0fe;
+      color:#0f1d41;
+      border-radius:6px;
+      padding:10px 14px;
+      margin-bottom:18px;
+      font-size:15px;
+      text-align:center;
+    }
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-label {
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #e0e4ea;
+      border-radius: 7px;
+      background: #f7f8fa;
+      font-size: 15px;
+      margin-top: 4px;
+    }
+
+    .form-btn-group {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .btn {
+      flex: 1;
+      border: none;
+      border-radius: 6px;
+      padding: 10px 0;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: #0f1d41;
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background: #e0e4ea;
+      color: #0f1d41;
+    }
+  </style>
+</head>
+
+
+
+<body>
+<div layout:fragment="content">
+  <div class="container mt-5">
+    <div class="row">
+      <h1>로그인</h1>
+      <div th:if="${authFailMsg != null}" class="authFailMsg">
+        <span th:text="${authFailMsg}"></span>
+      </div>
+      <div th:if="${signupStatus != null}" class="signupStatus">
+        <span th:text="${signupStatus}"></span>
+      </div>
+      <form action="login" method="POST">
+        <div class="mb-3 mt-3 form-group">
+          <label for="memberId" class="form-label">아이디</label>
+          <input type="text" class="form-control" id="memberId" placeholder="아이디를 입력하세요" name="memberId">
+        </div>
+        <div class="mb-3 form-group">
+          <label for="memberPwd" class="form-label">비밀번호</label>
+          <input type="password" class="form-control" id="memberPwd" placeholder="비밀번호를 입력하세요" name="memberPwd">
+        </div>
+        <div class="form-btn-group">
+          <button type="submit" class="btn btn-primary">로그인</button>
+          <button type="reset" class="btn btn-secondary">취소</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+</body>
+</html>

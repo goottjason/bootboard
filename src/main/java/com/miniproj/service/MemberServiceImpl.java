@@ -1,6 +1,9 @@
 package com.miniproj.service;
 
+import com.miniproj.domain.Member;
 import com.miniproj.mapper.MemberMapper;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.miniproj.domain.MemberDTO;
@@ -10,9 +13,13 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class MemberServiceImpl implements MemberService {
   
   private final MemberMapper memberMapper;
+
+
+  private final BCryptPasswordEncoder bCryptPasswordEncoder;
   
   @Override
   public int idIsDuplicate(String memberId) {
@@ -47,6 +54,13 @@ public class MemberServiceImpl implements MemberService {
     return memberMapper.selectMemberById(memberId);
   }
 
+  @Override
+  public void register(Member member) {
+    String encryptedPwd = bCryptPasswordEncoder.encode(member.getMemberPwd());
+    member.setMemberPwd(encryptedPwd);
+
+    memberMapper.insertMemberByMember(member);
+  }
 
 
 }
