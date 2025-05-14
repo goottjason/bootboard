@@ -11,16 +11,16 @@ public interface BoardMapper {
   @Select("select now()")
   String selectNow();
 
-  @Insert("insert into hboard(title, content, writer) values(#{title}, #{content}, #{writer})")
+  @Insert("insert into hboard(title, content, writer, boardType) values(#{title}, #{content}, #{writer}, 'hboard')")
   @Options(useGeneratedKeys = true, keyProperty = "boardNo")
   int insertNewBoard(HBoardDTO hBoardDTO);
 
-  @Update("update hboard set ref = #{boardNo} where boardNo = #{boardNo}")
+  @Update("update hboard set ref = #{boardNo} where boardNo = #{boardNo} and boardType = 'hboard'")
   int updateRefToBoardNo(@Param("boardNo") int boardNo);
 
 
   // MyBatis는 SQL 결과를 자바의 List로 반환할 때 기본적으로 java.util.ArrayList를 사용
-  @Select("select * from hboard order by ref desc, refOrder asc")
+  @Select("select * from hboard where boardType = 'hboard' order by ref desc, refOrder asc")
   List<HBoardVO> selectAllBoards();
 
   List<HBoardVO> selectListWithSearch(PagingRequestDTO pagingRequestDTO);
@@ -53,10 +53,10 @@ public interface BoardMapper {
   int incrementReadCount(@Param("boardNo") int boardNo);
 
 
-  @Update("update hboard set refOrder = refOrder + 1 where ref = #{ref} and refOrder > #{refOrder}")
+  @Update("update hboard set refOrder = refOrder + 1 where ref = #{ref} and refOrder > #{refOrder} and boardType = 'hboard'")
   void updateRefOrder(@Param("ref") int ref, @Param("refOrder") int refOrder);
 
-  @Insert("insert into hboard(title, content, writer, ref, step, refOrder) values(#{title}, #{content}, #{writer}, #{ref}, #{step}, #{refOrder})")
+  @Insert("insert into hboard(title, content, writer, ref, step, refOrder, boardType) values(#{title}, #{content}, #{writer}, #{ref}, #{step}, #{refOrder}, 'hboard')")
   @Options(useGeneratedKeys = true, keyProperty = "boardNo")
   int insertReplyBoard(HBoardDTO replyBoard);
 
@@ -72,10 +72,10 @@ public interface BoardMapper {
   @Select("select * from boardupfiles where boardNo = #{boardNo}")
   List<BoardUpFilesVODTO> selectFilesByBoardNo(int boardNo);
 
-  @Select("select * from hboard order by ref desc, refOrder asc limit #{skip}, #{pagingSize}")
+  @Select("select * from hboard where boardType = 'hboard' order by ref desc, refOrder asc limit #{skip}, #{pagingSize}")
   List<HBoardVO> selectList(PagingRequestDTO pagingRequestDTO);
 
-  @Select("select count(*) from hboard")
+  @Select("select count(*) from hboard where boardType = 'hboard'")
   int selectTotalCount();
 
   @Delete("DELETE FROM boardupfiles WHERE boardNo = #{boardNo}")

@@ -30,7 +30,7 @@
       </div>
       <div class="input-group mb-3">
         <span class="input-group-text">Writer</span>
-        <input type="text" class="form-control" th:field="*{writer}" placeholder="Writer...">
+        <input type="text" class="form-control" name="writer" th:value="${session.loginMember.memberId}" placeholder="Writer..." readonly="readonly">
         <div id="error-writer" class="error-message"></div>
       </div>
       <div class="input-group mb-3">

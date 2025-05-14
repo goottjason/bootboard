@@ -42,7 +42,7 @@
     f.*, m.memberName, m.email from hboard h
     left outer join boardupfiles f on h.boardNo = f.boardNo
     inner join member m on h.writer = m.memberId
-    where h.boardNo = #{boardNo};
+    where h.boardNo = #{boardNo} and boardType = 'hboard';
   </select>
 
 
@@ -52,7 +52,9 @@
 
   <sql id="search">
     <where>
+      boardType = 'hboard'
       <if test="types != null and types.size > 0">
+        AND (
         <foreach item="type" collection="types" separator=" OR ">
           <choose>
             <when test="type == 't'.toString()">
@@ -66,6 +68,7 @@
             </when>
           </choose>
         </foreach>
+        )
       </if>
     </where>
   </sql>

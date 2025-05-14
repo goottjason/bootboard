@@ -1,5 +1,6 @@
 package com.miniproj.config;
 
+import com.miniproj.interceptor.AuthInterceptor;
 import com.miniproj.interceptor.LoginInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,6 +18,7 @@ public class WebConfig implements WebMvcConfigurer {
   private String uploadDir;
 
   private final LoginInterceptor loginInterceptor;
+  private final AuthInterceptor authInterceptor;
 
   @Override
   public void addResourceHandlers(ResourceHandlerRegistry registry) {
@@ -30,5 +32,8 @@ public class WebConfig implements WebMvcConfigurer {
     // 로그인 인터셉터
     registry.addInterceptor(loginInterceptor)
       .addPathPatterns("/member/login");
+    registry.addInterceptor(authInterceptor)
+      .addPathPatterns("/board/register", "/board/modify", "/board/removeBoard", "/board/showReplyForm");
   }
+
 }

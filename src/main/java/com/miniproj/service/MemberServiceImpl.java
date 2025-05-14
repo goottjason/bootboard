@@ -1,5 +1,6 @@
 package com.miniproj.service;
 
+import com.miniproj.domain.LoginDTO;
 import com.miniproj.domain.Member;
 import com.miniproj.mapper.MemberMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +22,7 @@ public class MemberServiceImpl implements MemberService {
 
   private final BCryptPasswordEncoder bCryptPasswordEncoder;
   
-  @Override
+  /*@Override
   public int idIsDuplicate(String memberId) {
     return memberMapper.selectIdIsDuplicate(memberId);
   }
@@ -52,7 +53,7 @@ public class MemberServiceImpl implements MemberService {
   @Override
   public MemberDTO selectMemberById(String memberId) {
     return memberMapper.selectMemberById(memberId);
-  }
+  }*/
 
   @Override
   public void register(Member member) {
@@ -60,6 +61,16 @@ public class MemberServiceImpl implements MemberService {
     member.setMemberPwd(encryptedPwd);
 
     memberMapper.insertMemberByMember(member);
+  }
+
+  @Override
+  public Member login(LoginDTO loginDTO) {
+    Member member = memberMapper.findMemberById(loginDTO.getMemberId());
+    if (member != null && bCryptPasswordEncoder.matches(loginDTO.getMemberPwd(), member.getMemberPwd())) {
+      // log.info("member: {}", member);
+      return member;
+    }
+    return null;
   }
 
 

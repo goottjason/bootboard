@@ -62,7 +62,7 @@
         <a th:href="|@{/board/list}?${pagingRequestDTO.link}|" class="btn btn-primary btn-lg">목록으로</a>
         <a th:href="@{/board/list}" class="btn btn-primary btn-lg" id="modifyBtn" th:data-boardno="${detail.boardNo}" th:data-link="${pagingRequestDTO.link}">수정</a>
         <!--<a th:href="@{/board/list}" class="btn btn-primary btn-lg" id="modifyBtn" th:data-boardno="${detail.boardNo}" th:onclick="|location.href='/board/modify(boardNo=${detail.boardNo})&${pagingRequestDTO.link}'|">수정</a>-->
-        <a th:href="@{/board/list}" class="btn btn-primary btn-lg" id="removeBtn">삭제</a>
+        <a th:href="@{/board/list}" class="btn btn-primary btn-lg" id="removeBtn" th:data-link="${pagingRequestDTO.link}">삭제</a>
         <!--수정하기, 답글달기 등-->
         <a th:href="@{/board/showReplyForm(boardNo=${detail.boardNo},
           ref=${detail.getRef()}, step=${detail.getStep()}, refOrder=${detail.getRefOrder()}, pageNo=${pageNo})}" class="btn btn-primary btn-lg">답글작성</a>
@@ -93,6 +93,8 @@
       <div class="modal-content">
         <form th:action="@{/board/removeBoard}" method="post">
           <input type="hidden" name="boardNo" th:value="${detail.boardNo}">
+          <input type="hidden" name="pageNo" th:value="${pagingRequestDTO}">
+          <input type="hidden" name="pagingSize" th:value="${pagingRequestDTO}">
           <div class="modal-header">
             <h5 class="modal-title">알림</h5>
             <button type="button" class="btn-close closeModalBtn" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -148,14 +150,20 @@
       // 2초 후에 toast 메시지 닫기
       setTimeout(function() {
         $("#toastMessage").fadeOut();
-      }, 2000);
+      }, 3000);
     } else if (status == "failure") {
       $(".toast-body").html("수정실패");
       $("#toastMessage").show();
       // 2초 후에 toast 메시지 닫기
       setTimeout(function() {
         $("#toastMessage").fadeOut();
-      }, 2000);
+      }, 3000);
+    } else if (status == "authFail") {
+      $(".toast-body").html("권한이 없습니다.");
+      $("#toastMessage").show();
+      setTimeout(function() {
+        $("#toastMessage").fadeOut();
+      }, 3000);
     }
   });
 

@@ -1,11 +1,12 @@
 package com.miniproj.service;
 
+import com.miniproj.domain.LoginDTO;
 import com.miniproj.domain.Member;
 import com.miniproj.domain.MemberDTO;
 import com.miniproj.domain.MemberUpdateDTO;
 
 public interface MemberService {
-  int idIsDuplicate(String memberId);
+  /*int idIsDuplicate(String memberId);
 
   int insertMember(MemberDTO member);
 
@@ -16,8 +17,10 @@ public interface MemberService {
   int updateInfo(MemberUpdateDTO member);
 
   int uniqueEmailCheck(String email);
-  MemberDTO selectMemberById(String memberId);
+  MemberDTO selectMemberById(String memberId);*/
 
 
   void register(Member member);
+
+  Member login(LoginDTO loginDTO);
 }

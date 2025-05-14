@@ -35,4 +35,11 @@ public class MemberServiceTests {
     log.info(member1.toString());
   }
 
+  @Test
+  public void testLogin() {
+    String tmpId = "user03";
+    Member member = memberMapper.findMemberById(tmpId);
+    log.info("{}", member);
+  }
+
 }

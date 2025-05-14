@@ -125,7 +125,7 @@ public class BoardController {
   // 글상세페이지
   @GetMapping("/detail")
   public String boardDetail(@RequestParam(value="boardNo", required = false, defaultValue = "-1") int boardNo,
-                            @RequestParam(value = "pageNo") int pageNo,
+                            @RequestParam(value = "pageNo", required = false, defaultValue = "1") int pageNo,
                             PagingRequestDTO pagingRequestDTO, Model model,
                             HttpServletRequest request, RedirectAttributes redirectAttributes) {
 
@@ -328,8 +328,8 @@ public class BoardController {
     log.info("{}", board);*/
   }
 
-  @PostMapping("/removeBoard")
-  public String removeBoard(@RequestParam("boardNo") int boardNo, RedirectAttributes redirectAttributes) {
+  @RequestMapping("/removeBoard")
+  public String removeBoard(@RequestParam("boardNo") int boardNo, PagingRequestDTO pagingRequestDTO, RedirectAttributes redirectAttributes) {
     log.info("{}번 글을 삭제하자...", boardNo);
 
     List<BoardUpFilesVODTO> upFilesVODTOS = boardService.removeBoard(boardNo);
