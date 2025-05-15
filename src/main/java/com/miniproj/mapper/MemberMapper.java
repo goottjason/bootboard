@@ -1,11 +1,7 @@
 package com.miniproj.mapper;
 
-import com.miniproj.domain.Member;
-import com.miniproj.domain.PointWhy;
+import com.miniproj.domain.*;
 import org.apache.ibatis.annotations.*;
-
-import com.miniproj.domain.MemberDTO;
-import com.miniproj.domain.MemberUpdateDTO;
 
 @Mapper
 public interface MemberMapper {
@@ -45,5 +41,16 @@ public interface MemberMapper {
 
   @Select("select * from member where memberId = #{memberId]}")
   Member findMemberById(String memberId);
+
+  @Update("update member set sesid = #{sesid}, allimit = #{allimit} where memberId = #{memberId}")
+  int updateAutoLoginInfo(AutoLoginInfo autoLoginInfo);
+
+
+  // 쿠키에 자동로그인한다고 저장되어있을 때, 자동로그인 하는 쿼리문
+  @Select("select * from member where sesid = #{sesid} and allimit > now()")
+  Member checkAutoLoginMember(String sesid);
+
+  @Update("update member set sesid = null, allimit = null where memberId = #{memberId}")
+  void clearAutoLoginInfo(String memberId);
 }
 

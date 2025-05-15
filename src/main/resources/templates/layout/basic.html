@@ -27,6 +27,7 @@
       <div th:text="${authMember}"></div>
 
       <a class="list-group-item list-group-item-action list-group-item-light p-3" th:href="@{/board/list}">게시판</a>
+      <a class="list-group-item list-group-item-action list-group-item-light p-3" th:href="@{/commboard/list}">댓글형게시판</a>
       <div th:if="${authMember == null}">
         <a class="list-group-item list-group-item-action list-group-item-light p-3" th:href="@{/member/signup}">회원가입</a>
 

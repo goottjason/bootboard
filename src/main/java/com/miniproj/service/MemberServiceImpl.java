@@ -1,14 +1,10 @@
 package com.miniproj.service;
 
-import com.miniproj.domain.LoginDTO;
-import com.miniproj.domain.Member;
+import com.miniproj.domain.*;
 import com.miniproj.mapper.MemberMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import com.miniproj.domain.MemberDTO;
-import com.miniproj.domain.MemberUpdateDTO;
 
 import lombok.RequiredArgsConstructor;
 
@@ -71,6 +67,25 @@ public class MemberServiceImpl implements MemberService {
       return member;
     }
     return null;
+  }
+
+  @Override
+  public boolean saveAutoLoginInfo(AutoLoginInfo autoLoginInfo) {
+    boolean flag = false;
+    if (memberMapper.updateAutoLoginInfo(autoLoginInfo) == 1) {
+      flag = true;
+    }
+    return flag;
+  }
+
+  @Override
+  public Member checkAutoLogin(String savedCookieSesid) {
+    return memberMapper.checkAutoLoginMember(savedCookieSesid);
+  }
+
+  @Override
+  public void clearAuthLoginInfo(String memberId) {
+    memberMapper.clearAutoLoginInfo(memberId);
   }
 
 

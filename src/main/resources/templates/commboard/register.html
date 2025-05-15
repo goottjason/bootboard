@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org"
+      layout:decorate="~{layout/basic.html}">
+<head>
+  <link th:href="@{/css/register.css}" rel="stylesheet" />
+</head>
+<body>
+
+<div layout:fragment="content">
+  <h1>글 등록</h1>
+  <div class="row mt-3">
+    <!-- board 객체의 필드(title, content, writer)로 전송되고, -->
+    <!-- 파일 업로드할 때 필요한 속성(enctype="multipart/form-data") -->
+    <form id="boardForm" th:action="@{/commboard/register}" method="post" th:object="${board}"  enctype="multipart/form-data">
+      <div class="input-group mb-3">
+        <span class="input-group-text">Title</span>
+        <input type="text" class="form-control" th:field="*{title}" placeholder="Title...">
+        <!-- 타임리프에서 제공하는 유틸리티 객체(#fields),'title' 필드에 검증 오류가 있으면 true, 없으면 false를 반환 -->
+        <!-- title 필드에 발생한 모든 오류 메시지를 자동으로 출력 -->
+        <div th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></div>
+        <div id="error-title" class="error-message"></div>
+      </div>
+      <div class="input-group mb-3">
+        <span class="input-group-text">Content</span>
+        <textarea class="form-control" th:field="*{content}" placeholder="Content..." rows="10"></textarea>
+        <div th:if="${#fields.hasErrors('content')}" th:errors="*{content}"></div>
+        <div id="error-content" class="error-message"></div>
+      </div>
+      <div class="input-group mb-3">
+        <span class="input-group-text">Writer</span>
+        <input type="text" class="form-control" name="writer" th:value="${session.loginMember.memberId}" placeholder="Writer..." readonly="readonly">
+        <div id="error-writer" class="error-message"></div>
+      </div>
+      <div class="input-group mb-3">
+        <span class="input-group-text">첨부파일</span>
+        <input type="file" class="form-control" id="fileInput" th:field="*{multipartFiles}" multiple>
+        <div id="error-multipartFiles" class="error-message"></div>
+      </div>
+      <div id="preview">
+        <!-- 첨부된 파일을 미리 볼 수 있는 영역 -->
+      </div>
+      <div class="my-4">
+        <div class="float-end">
+          <button type="submit" class="btn btn-primary btn-lg">글쓰기</button>
+          <button type="reset" class="btn btn-secondary btn-lg">취소</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<script layout:fragment="script" th:inline="javascript">
+
+
+  let selectedFiles = [];
+
+  $("#fileInput").on('change', function() {
+
+    // event.target.files에서 선택된 파일들을 배열로 변환(event는 암묵적으로 전달되는 이벤트 객체)
+    let newFiles = Array.from(event.target.files);
+
+    // 배열의 각 요소가 file이라는 이름으로 하나씩 전달되어 함수가 실행
+    newFiles.forEach(function(file) {
+
+      // some() 메서드는 배열에서 조건을 만족하는 요소가 하나라도 있으면 true를 반환
+      if(!selectedFiles.some(function(f) {
+        return f.name == file.name && f.size == file.size && f.lastModified == file.lastModified
+      })) {
+        // 파일 이름, 크기, 최종수정일이 모두 같으면 true 반환, ! 이므로 false일 떄(중복 아닐 때) push
+        selectedFiles.push(file);
+      }
+    });
+
+    // 여러 개를 첨부한 후 최종 파일의 개수를 표시하기 위함
+    updateInputFile();
+
+    //
+    showPreview();
+  });
+
+  function updateInputFile() {
+
+    // 파일 목록을 동적으로 조작할 수 있게 해주는 객체
+    const dataTransfer = new DataTransfer();
+
+    selectedFiles.forEach(function (file) {
+      // DataTransfer 객체에 파일을 하나씩 추가
+      dataTransfer.items.add(file);
+    });
+
+    // 실제 input[type="file"]의 파일 목록을 selectedFiles 배열과 동일하게 만들기 위함
+    // 최종 첨부파일 개수가 4개면 4개로 표시되도록 함
+    document.getElementById("fileInput").files = dataTransfer.files;
+  }
+
+  function showPreview() {
+    // 계속 변동될 수 있으므로, 요소를 일단 비움
+    $("#preview").empty();
+
+
+    selectedFiles.forEach(function(file, index) {
+
+      // 각 파일 미리보기를 감쌀 div(wrapper)를 생성 (index를 data-index 속성에 추가)
+      let wrapper = $("<div>").addClass("file-preview").attr("data-index", index);
+
+      // 삭제 버튼 생성, 클릭시 handleRemoveFile() 함수 실행
+      let removeBtn = $("<span>X</span>").addClass("file-remove-btn").on("click", handleRemoveFile);
+
+      // file의 MIME 타입이 image인지 아닌지 판단
+      if (file.type.startsWith("image/")) {
+        //이미지
+
+        // 파일을 읽어서 미리보기 이미지를 만들기 위해 FileReader 객체를 생성
+        const reader = new FileReader();
+
+        // 파일을 다 읽었을 때 실행될 함수(onload)를 정의
+        reader.onload = function (e) {
+          // 읽은 파일 데이터를 src로 하는 img 태그를 생성 (e.target.result = 이미지의 주소가 담겨있음)
+          const img = $("<img>").attr("src", e.target.result);
+          // 파일이름을 표시하는 div 공간 생성
+          const fileName = $("<div>").addClass("file-preview-name").text(file.name);
+
+          // wrapper에 이미지, 파일 이름, 삭제 버튼을 추가
+          wrapper.append(img).append(fileName).append(removeBtn);
+
+          $("#preview").append(wrapper);
+        };
+        // 파일을 DataURL(이미지 미리보기용)로 읽기 시작?
+        reader.readAsDataURL(file);
+
+      } else {
+        //기타파일
+        wrapper.text("파일: " + file.name).append(removeBtn);
+
+        $("#preview").append(wrapper);
+      }
+    });
+  }
+
+  function handleRemoveFile(event) {
+    // 삭제 버튼의 부모(wrapper)의 data-index 속성값(파일의 배열 인덱스)을 가져옴
+    let removeIndex = $(this).parent().data("index");
+
+    // 배열에서 removeIndex 번째 요소 1개를 삭제
+    selectedFiles.splice(removeIndex, 1);
+
+    // 삭제된 후 갱신
+    updateInputFile();
+    showPreview();
+  }
+
+
+
+  // Ajax로 form submit
+  $("#boardForm").on("submit", function(e) {
+
+    // 폼의 기본 제출 동작(페이지 새로고침)을 방지
+    e.preventDefault();
+
+    // 폼 데이터를 FormData 객체로 생성 (input, textarea, file 등 자동 포함)
+    const formData = new FormData(document.getElementById("boardForm"));
+
+    $.ajax({
+      url: "/commboard/register",
+      type: "POST",
+      // dataType: "json",
+      data: formData,
+      processData: false, // 쿼리스트링으로 변화하지 않고, formData 그대로 보내도록 설정
+
+      // application/x-www-form-urlencoded; charset=UTF-8로 자동 설정되는 것을 방지
+      // FormData 객체 사용할 때 필수적으로 false 해야 함
+      contentType: false,
+
+      // async: false,
+      success: function (data) {
+        alert("저장완료");
+        console.log(data);
+        location.href = "/commboard/list";
+      },
+      error: function(xhr) { // 실패시, 에러객체를 받아옴
+        // 서버에서 받은 에러 메시지(JSON)를 저장
+        const error = xhr.responseJSON;
+
+        // 모든 에러 메시지 영역을 초기화
+        $(".error-message").text('');
+
+        if (xhr.status == 400) {
+          alert("400 오류")
+          // 각 필드별 에러 메시지를 해당 위치에 표시
+          for (let field in errors) {
+            let errorMsg = errors[field];
+            $("#error-" + field).text(errorMsg);
+          }
+
+        } else if (xhr.status == 413) { // 413 Payload Too Large(파일 용량 초과)
+          alert("파일 용량 초과");
+        }
+      },
+      complete: function() {}
+    });
+  });
+
+  $("#boardForm").on("reset", function(e) {
+    selectedFiles = [];
+    $("#preview").empty();
+  });
+</script>
+</body>
+</html>

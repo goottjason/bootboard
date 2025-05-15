@@ -33,7 +33,15 @@ public class WebConfig implements WebMvcConfigurer {
     registry.addInterceptor(loginInterceptor)
       .addPathPatterns("/member/login");
     registry.addInterceptor(authInterceptor)
-      .addPathPatterns("/board/register", "/board/modify", "/board/removeBoard", "/board/showReplyForm");
+      .addPathPatterns(
+        "/board/register",
+        "/board/modify",
+        "/board/removeBoard",
+        "/board/showReplyForm",
+        "/commboard/register",
+        "/commboard/modify",
+        "/commboard/removeBoard",
+        "/commboard/showReplyForm");
   }
 
 }

@@ -64,3 +64,15 @@ CREATE TABLE `boardupfiles` (
 
 -- 업로드 파일 저장
 -- insert into boardUpfiles (boardNo, originalFileName, newFileName, thumbFileName, isImage, ext, size, base64, filePath) values (#{boardNo}, #{originalFileName}, #{newFileName}, #{thumbFileName}, #{isImage}, #{ext}, #{size}, #{base64}, #{filePath});
+CREATE TABLE `comment` (
+                           `commentNo` int NOT NULL AUTO_INCREMENT,
+                           `commenter` varchar(8) DEFAULT NULL,
+                           `content` varchar(500) DEFAULT NULL,
+                           `regDate` datetime DEFAULT CURRENT_TIMESTAMP,
+                           `boardNo` int DEFAULT NULL,
+                           PRIMARY KEY (`commentNo`),
+                           KEY `fk_comm-mem_idx` (`commenter`),
+                           KEY `fk_comm_hboard_idx` (`boardNo`),
+                           CONSTRAINT `fk_comm-mem` FOREIGN KEY (`commenter`) REFERENCES `member` (`memberId`) ON DELETE CASCADE,
+                           CONSTRAINT `fk_comm_hboard` FOREIGN KEY (`boardNo`) REFERENCES `hboard` (`boardNo`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci

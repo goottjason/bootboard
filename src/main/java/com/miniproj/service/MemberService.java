@@ -1,9 +1,6 @@
 package com.miniproj.service;
 
-import com.miniproj.domain.LoginDTO;
-import com.miniproj.domain.Member;
-import com.miniproj.domain.MemberDTO;
-import com.miniproj.domain.MemberUpdateDTO;
+import com.miniproj.domain.*;
 
 public interface MemberService {
   /*int idIsDuplicate(String memberId);
@@ -23,4 +20,10 @@ public interface MemberService {
   void register(Member member);
 
   Member login(LoginDTO loginDTO);
+
+  boolean saveAutoLoginInfo(AutoLoginInfo autoLoginInfo);
+
+  Member checkAutoLogin(String savedCookieSesid);
+
+  void clearAuthLoginInfo(String memberId);
 }
