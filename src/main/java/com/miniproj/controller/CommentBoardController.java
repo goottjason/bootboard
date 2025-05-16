@@ -1,7 +1,6 @@
 package com.miniproj.controller;
 
 import com.miniproj.domain.*;
-import com.miniproj.service.BoardService;
 import com.miniproj.service.CommentBoardService;
 import com.miniproj.util.FileUploadUtil;
 import com.miniproj.util.GetClientIPAddr;
@@ -123,7 +122,7 @@ public class CommentBoardController {
   }
 
   // 글상세페이지
-  @GetMapping("/detail")
+  @GetMapping("/viewBoard")
   public String boardDetail(@RequestParam(value="boardNo", required = false, defaultValue = "-1") int boardNo,
                             @RequestParam(value = "pageNo", required = false, defaultValue = "1") int pageNo,
                             PagingRequestDTO pagingRequestDTO, Model model,
@@ -153,7 +152,7 @@ public class CommentBoardController {
     model.addAttribute("detail", detailInfos.get(0));
     model.addAttribute("pagingRequestDTO", pagingRequestDTO);
 
-    return "/commboard/detail";
+    return "/commboard/viewBoard"; //★
   }
 
   // 게시글 수정하기
@@ -280,7 +279,7 @@ public class CommentBoardController {
     String link = pagingRequestDTO.getLink();
     if(bindingResult.hasErrors()) {
 
-      // "redirect:/board/detail?boardNo=" + board.getBoardNo();
+      // "redirect:/board/viewBoard?boardNo=" + board.getBoardNo();
       redirectAttributes.addFlashAttribute("errors", bindingResult.getAllErrors());
       redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.board", bindingResult);
       redirectAttributes.addFlashAttribute("board", board);
@@ -319,7 +318,7 @@ public class CommentBoardController {
       redirectAttributes.addAttribute("status", "failure");
     }
 
-    return "redirect:/commboard/detail?boardNo=" + board.getBoardNo() +"&" + link;
+    return "redirect:/commboard/viewBoard?boardNo=" + board.getBoardNo() +"&" + link;
 
 /*    if(bindingResult.hasErrors()) {
       log.info("{}", bindingResult);

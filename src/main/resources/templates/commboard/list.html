@@ -48,7 +48,7 @@
         <span th:if="${board.isDelete == 'Y'}" style="color:gray;">[삭제된 글입니다]</span>
         <div th:if="${board.isDelete != 'Y'}" th:style="|margin-left: calc(${board.step} * 20px)|">
           <span th:if="${board.step > 0}">↳</span>
-          <a th:href="|@{/commboard/detail(boardNo=${board.boardNo})}&${pagingRequestDTO.getLink()}|" th:text="${board.title}">제목</a>
+          <a th:href="|@{/commboard/viewBoard(boardNo=${board.boardNo})}&${pagingRequestDTO.getLink()}|" th:text="${board.title}">제목</a>
         </div>
       </td>
       <td th:text="${board.writer}">작성자</td>

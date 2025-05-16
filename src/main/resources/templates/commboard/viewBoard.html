@@ -4,6 +4,7 @@
       xmlns:th="http://www.thymeleaf.org"
       layout:decorate="~{layout/basic.html}">
 <head>
+  <link rel="stylesheet" th:href="@{/css/commViewBoard.css}">
 </head>
 <body>
 
@@ -64,12 +65,20 @@
         <!--<a th:href="@{/commboard/list}" class="btn btn-primary btn-lg" id="modifyBtn" th:data-boardno="${detail.boardNo}" th:onclick="|location.href='/board/modify(boardNo=${detail.boardNo})&${pagingRequestDTO.link}'|">수정</a>-->
         <a th:href="@{/commboard/list}" class="btn btn-primary btn-lg" id="removeBtn" th:data-link="${pagingRequestDTO.link}">삭제</a>
         <!--수정하기, 답글달기 등-->
-        <a th:href="@{/commboard/showReplyForm(boardNo=${detail.boardNo},
-          ref=${detail.getRef()}, step=${detail.getStep()}, refOrder=${detail.getRefOrder()}, pageNo=${pageNo})}" class="btn btn-primary btn-lg">답글작성</a>
+        <!--<a th:href="@{/commboard/showReplyForm(boardNo=${detail.boardNo},
+          ref=${detail.getRef()}, step=${detail.getStep()}, refOrder=${detail.getRefOrder()}, pageNo=${pageNo})}" class="btn btn-primary btn-lg">답글작성</a>-->
+
 
       </div>
-    </div>
 
+    </div>
+    <div th:onclick="ajaxtest()">ajaxtest</div>
+    <!-- 댓글 작성란 -->
+    <div class="commentInputArea">
+      <input type="text" class="form-control" id="commentContent" placeholder="댓글을 입력하세요">
+      <img th:src="@{/images/saveComment.png}" th:onclick="saveComment()" style="cursor: pointer; width:40px">
+    </div>
+    <div id="commentList"></div>
   </div>
 
 
@@ -115,10 +124,194 @@
 </div> <!-- End: fragment="content" -->
 
 
-<script layout:fragment="script" th:inline="javascript">
+<script layout:fragment="script" th:inline="javascript"> // [[${param.xxx}]] 이런거 할려면 th:inline...
 
-  /* let status = [[${param.status}]]; */
+let boardNo = [[${param.boardNo[0]}]];
+let pageNo = 1;
+
+function ajaxtest() {
+  $.ajax({
+    url: `/ajaxtest`,
+    type: "post",
+    /*contentType: "application/json;charset=UTF-8",
+    data: JSON.stringify(commentData),*/
+    dataType: "json",
+    success: function (res) {
+      console.log(res);
+    },
+    error: function (res) {
+      console.log(res);
+      if (res.status == 401) {
+        location.href = `/member/login?boardNo=${boardNo}`;
+      }
+    },
+    complete: function (res) {
+    }
+  });
+}
+
+function proccessPostDate(regDate) {
+  // 댓글 작성일시 : 방금전, n분전, n시간전... 형식으로 출력
+  const now = new Date();
+  const postDate = new Date(regDate);
+
+  let diff = (now - postDate) / 1000;
+  // diff = 60 * 60 * 4;
+
+  // console.log(diff);
+
+  const times = [
+    {name : "일", time: 24 * 60 * 60},
+    {name : "시간", time: 60 * 60},
+    {name : "분", time: 60},
+  ]
+
+  for (let val of times) {
+    let betweenTime = Math.floor(diff / val.time);
+    // console.log(regDate, diff, betweenTime);
+    // console.log(betweenTime + val.name + "전");
+
+    if (betweenTime > 0 && val.name != "일") {
+      return betweenTime + val.name + "전";
+    } else if (betweenTime > 0 && val.name == "일") {
+      return postDate.toLocaleString();
+    }
+  }
+  return "방금전";
+}
+
+function displayAllComments(commentList) {
+  let output = `<ul class="list-group">`;
+  if(!commentList || commentList.length == 0 ) {
+    output+=`<li class="list-group-item">텅</li>`;
+  } else {
+    commentList.forEach(function (comment) {
+      output += `
+        <li class="list-group-item">
+          <img src="/images/avatar.png" style="width:50px; height:50px; border-radius: 50px;margin-right:15px;">
+          <div class="flex-grow-1">
+            <div class="fw-bold mb-1">${comment.content}</div>
+            <div class="small">${proccessPostDate(comment.regDate)}</div>
+          </div>
+          <div class="text-end">
+            <div>
+              <span style="cursor: pointer">수정</span>
+              <span style="cursor: pointer">삭제</span>
+            </div>
+            <div class="small text-secondary">
+              ${comment.commenter}
+            </div>
+          </div>
+        </li>
+      `;
+    });
+  }
+  output += `</ul>`;
+  $("#commentList").html(output);
+}
+
+function displayPaginaation(data) {
+
+}
+
+function getAllComments(pageNo) {
+  $.ajax({
+    url: `/comment/all/${boardNo}/${pageNo}`,
+    type: "GET",
+    /*contentType: "application/json;charset=UTF-8",
+    data: JSON.stringify(commentData),*/
+    dataType: 'json',
+    success: function (data) {
+      console.log(data);
+      console.log(data.resultMessage);
+      if (data.resultMessage == "SUCCESS") {
+        displayAllComments(data.data.dtoList);
+        displayPaginaation(data.data);
+      }
+
+    },
+    error: function (data) {
+      console.log(data);
+    },
+    complete: function (data) {
+      console.log(data);
+    }
+  });
+}
+
+// 댓글 저장, 수정, 삭제 시 로그인 인증
+function preAuth() {
+  let commenter = [[${session.loginMember}]];
+  console.log(commenter);
+
+  if (commenter == null) {
+    location.href = `/member/login?redirectUrl=commboard/viewBoard&boardNo=${boardNo}`;
+
+    // 로컬 스토리지에 댓글 내용 있으면 저장
+    let commentContent = $("#commentContent").val();
+    if (commentContent != '') {
+      localStorage.setItem("commentContent", commentContent);
+
+    }
+    return null;
+  } else {
+    console.log("로그인된 사용자 ID", commenter.memberId);
+    return commenter.memberId;
+  }
+}
+
+function saveComment() {
+    // let boardNo = $("#boardNo").val();
+    let commenter = preAuth();
+    let content=$("#commentContent").val();
+    console.log(boardNo + "저장하자");
+
+    if (commenter == null) {
+      return;
+    }
+
+    let commentData = {
+      content : content,
+      commenter: commenter
+    };
+
+    $.ajax({
+      url: `/comment/${boardNo}`,
+      type: "POST",
+      contentType: "application/json;charset=UTF-8",
+      data: JSON.stringify(commentData),
+      dataType: 'json',
+      success: function (res) {
+        console.log(res);
+        if (res.resultMessage == "SUCCESS") {
+          // 저장완료
+          $("#commentContent").val("");
+          getAllComments(pageNo);
+        }
+      },
+      error: function (res) {
+        console.log(res);
+      },
+      complete: function (res) {
+        console.log(res);
+      }
+    });
+  }
+
+function getInputCommentContent() {
+  // 페이지 로드되면 호출됨
+  let commentContent = localStorage.getItem("commentContent");
+  if (commentContent != null || commentContent != "") {
+    $("#commentContent").val(commentContent);
+    localStorage.removeItem("commentContent");
+  }
+}
+
+/* let status = [[${param.status}]]; */
   $(function() {
+
+    getAllComments(pageNo);
+    getInputCommentContent();
 
     $("#removeBtn").on("click", function(e) {
       e.preventDefault();
@@ -166,6 +359,7 @@
       }, 3000);
     }
   });
+
 
 </script>
 </body>

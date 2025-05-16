@@ -41,7 +41,8 @@ public class WebConfig implements WebMvcConfigurer {
         "/commboard/register",
         "/commboard/modify",
         "/commboard/removeBoard",
-        "/commboard/showReplyForm");
+        "/commboard/showReplyForm",
+        "/ajaxtest");
   }
 
 }

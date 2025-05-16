@@ -63,30 +63,44 @@ public class LoginInterceptor implements HandlerInterceptor {
       // POST 방식 :
       result = true;
     }
-    // 자동 로그인 한 유저
-    // 쿠키검사하여 자동로그인 쿠키 존재여부
-    Cookie autoLoginCookie = WebUtils.getCookie(request, "al");
-    log.info("===== autoLoginCookie : {}", autoLoginCookie);
-    if (autoLoginCookie != null) { // 쿠키가 있다
-      String savedCookieSesid = autoLoginCookie.getValue();
-      // DB에서 자동로그인 체크한 유저를 확인하고, 자동로그인 시켜야 함
-      Member autoLoginUser = memberService.checkAutoLogin(savedCookieSesid);
-      log.info("autoLoginUser : {}", autoLoginUser);
-      if (autoLoginUser != null) {
-        ses.setAttribute("loginMember", autoLoginUser);
-        String destPath = (String) ses.getAttribute("destPath");
-        response.sendRedirect((destPath != null) ? destPath : "/");
-        result = false;
+
+    if(request.getMethod().equalsIgnoreCase("GET")) {
+      if (request.getParameter("redirectUrl") != null) {
+        // 댓글 작성하려다가 로그인하러 끌려옴
+        String redirectUrl = request.getParameter("redirectUrl");
+        if(redirectUrl.contains("view")) {
+          int boardNo = Integer.parseInt(request.getParameter("boardNo"));
+          ses.setAttribute("destPath", "/commboard/viewBoard?boardNo=" + boardNo);
+
+        }
       }
-    } else { // 쿠키가 없고, 로그인하지 않은 경우, 로그인페이지를 보여준다.
-      if(ses.getAttribute("loginMember") == null) {
-        log.info("쿠키가 없고, 로그인하지 않은 경우 로그인페이지를 보여줌");
-        result = true;
+
+
+
+      // 자동 로그인 한 유저
+      // 쿠키검사하여 자동로그인 쿠키 존재여부
+      Cookie autoLoginCookie = WebUtils.getCookie(request, "al");
+      log.info("===== autoLoginCookie : {}", autoLoginCookie);
+      if (autoLoginCookie != null) { // 쿠키가 있다
+        String savedCookieSesid = autoLoginCookie.getValue();
+        // DB에서 자동로그인 체크한 유저를 확인하고, 자동로그인 시켜야 함
+        Member autoLoginUser = memberService.checkAutoLogin(savedCookieSesid);
+        log.info("autoLoginUser : {}", autoLoginUser);
+        if (autoLoginUser != null) {
+          ses.setAttribute("loginMember", autoLoginUser);
+          String destPath = (String) ses.getAttribute("destPath");
+          response.sendRedirect((destPath != null) ? destPath : "/");
+          result = false;
+        }
+      } else { // 쿠키가 없고, 로그인하지 않은 경우, 로그인페이지를 보여준다.
+        if(ses.getAttribute("loginMember") == null) {
+          log.info("쿠키가 없고, 로그인하지 않은 경우 로그인페이지를 보여줌");
+          result = true;
+        }
+
       }
 
     }
-
-
     return result; // false: 해당 컨트롤러단의 메서드로 제어가 돌아가지 않는다.
 
   }
