@@ -43,6 +43,7 @@ dependencies {
   implementation("org.hibernate.validator:hibernate-validator:8.0.1.Final")
 
   implementation 'net.coobird:thumbnailator:0.4.8'
+
   implementation 'com.sun.mail:javax.mail:1.6.2'
   implementation 'org.springframework.boot:spring-boot-starter-mail'
 
