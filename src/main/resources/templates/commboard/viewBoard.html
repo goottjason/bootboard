@@ -302,6 +302,7 @@ function displayAllComments(commentData) {
   let output = `<ul class="list-group">`;
   if(!commentList || commentList.length == 0 ) {
     output+=`<li class="list-group-item">텅</li>`;
+
   } else {
     commentList.forEach(function (comment) {
       output += `
