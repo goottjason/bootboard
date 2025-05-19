@@ -88,4 +88,6 @@ public interface CommentBoardMapper {
   // 검색된 총 글의 개수
   int selectTotalCountWithSearch(PagingRequestDTO pagingRequestDTO);
 
+  @Insert("insert into boardlike(who, boardNo) values(#{who}, #{boardNo})")
+  int insertLike(@Param("boardNo") int boardNo, @Param("who") String who);
 }

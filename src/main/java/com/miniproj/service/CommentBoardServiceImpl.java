@@ -235,4 +235,9 @@ public class CommentBoardServiceImpl implements CommentBoardService {
       .total(total)
       .build();
   }
+
+  @Override
+  public int likeBoard(int boardNo, String who) {
+    return boardMapper.insertLike(boardNo, who);
+  }
 }

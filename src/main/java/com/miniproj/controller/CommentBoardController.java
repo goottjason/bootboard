@@ -353,4 +353,35 @@ public class CommentBoardController {
 
     return "redirect:/commboard/list";
   }
+
+  /**
+   * 좋아요 또는 취소 요청 처리 (like/dislike
+   * 추가: 자기글은 좋아요 하지 못하도록 처리하자.
+   * @param who
+   * @param boardNo
+   * @param like
+   * @return
+   */
+  @PostMapping("/boardlike")
+  public ResponseEntity<String> handleBoardLike(@RequestParam("who") String who,
+                                                @RequestParam("boardNo") int boardNo,
+                                                @RequestParam("like") String like) {
+    log.info("{}님이 {}번 글을 {} 요청", who, boardNo, like);
+
+    if("like".equals(like)) {
+      boardService.likeBoard(boardNo, who);
+    }
+
+    return ResponseEntity.ok("success");
+  }
+
+  /**
+   * 로그인한 유저가 boardNo번 글을 좋아하는지 여부
+   * 좋아요 한 사람의 수
+   * 3명의 멤버아이디 (top3) 외 몇명
+   */
+  @GetMapping("/boardlike/status/${boardNo}")
+  public void getBoardLikeStatus() {
+
+  }
 }

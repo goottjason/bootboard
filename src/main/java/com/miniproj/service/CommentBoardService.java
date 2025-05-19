@@ -28,4 +28,6 @@ public interface CommentBoardService {
   List<BoardUpFilesVODTO> removeBoard(int boardNo);
 
   PagingResponseDTO<HBoardPageDTO> getListWithSearch(PagingRequestDTO pagingRequestDTO);
+
+  int likeBoard(int boardNo, String who);
 }

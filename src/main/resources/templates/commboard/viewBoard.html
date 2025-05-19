@@ -58,6 +58,14 @@
       </div>
     </div>
 
+    <!-- 좋아요 -->
+    <div class="mb-2">
+      <i id="heart-icon" class="fa-regular fa-heart" style="cursor: pointer; color:red;"></i>
+      <span id="like-count">0</span>
+    </div>
+    <div id="like-people"></div>
+
+
     <div class="my-4">
       <div class="float-end">
         <a th:href="|@{/commboard/list}?${pagingRequestDTO.link}|" class="btn btn-primary btn-lg">목록으로</a>
@@ -79,6 +87,7 @@
       <img th:src="@{/images/saveComment.png}" th:onclick="saveComment()" style="cursor: pointer; width:40px">
     </div>
     <div id="commentList"></div>
+    <div id="commentPagination"></div>
   </div>
 
 
@@ -121,13 +130,118 @@
     </div>
   </div> <!-- End: Modal -->
 
-</div> <!-- End: fragment="content" -->
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://kit.fontawesome.com/9bef4b10f4.js" crossorigin="anonymous"></script>
 
+</div> <!-- End: fragment="content" -->
 
 <script layout:fragment="script" th:inline="javascript"> // [[${param.xxx}]] 이런거 할려면 th:inline...
 
 let boardNo = [[${param.boardNo[0]}]];
 let pageNo = 1;
+let currentPageNo = 1;
+
+
+
+/* let status = [[${param.status}]]; */
+$(function() {
+
+  getAllComments(pageNo);
+  getInputCommentContent();
+
+  // 좋아요 클릭시,
+  $("#heart-icon").click(function() {
+    let isLiked = $(this).hasClass("fa-solid");
+    let doesLike = isLiked ? 'dislike' : 'like';
+
+    sendBoardLike(doesLike);
+  });
+
+  $(document).on("click", ".page-btn", function(e) {
+    e.preventDefault();
+    let pageNo = $(this).data("page");
+    getAllComments(pageNo);
+  })
+
+  $("#removeBtn").on("click", function(e) {
+    e.preventDefault();
+    $("#deleteModal").show();
+
+  });
+  $(".closeModalBtn").on("click", function(e) {
+    e.preventDefault();
+    $("#deleteModal").hide();
+  })
+
+  $("#modifyBtn").on("click", function(e) {
+    e.preventDefault();
+    const boardNo = $(this).data("boardno");
+    let link = $(this).data("link");
+    let url = "/board/modify?boardNo=" + boardNo;
+    if(link) {
+      url += `&${link}`;
+    }
+    location.href = url;
+  });
+
+  const urlSearchParams = new URLSearchParams(window.location.search);
+  const status = urlSearchParams.get("status");
+  console.log(status);
+  if(status == "success") {
+    $(".toast-body").html("수정완료");
+    $("#toastMessage").show();
+    // 2초 후에 toast 메시지 닫기
+    setTimeout(function() {
+      $("#toastMessage").fadeOut();
+    }, 3000);
+  } else if (status == "failure") {
+    $(".toast-body").html("수정실패");
+    $("#toastMessage").show();
+    // 2초 후에 toast 메시지 닫기
+    setTimeout(function() {
+      $("#toastMessage").fadeOut();
+    }, 3000);
+  } else if (status == "authFail") {
+    $(".toast-body").html("권한이 없습니다.");
+    $("#toastMessage").show();
+    setTimeout(function() {
+      $("#toastMessage").fadeOut();
+    }, 3000);
+  }
+});
+
+function sendBoardLike(doesLike) {
+  let who = "user01";
+  let boardNo = $("#boardNo").val();
+  // boardNo = $("#boardNo").data("boardNo");
+  console.log(who, boardNo, doesLike);
+  axios.post("/commboard/boardlike", null, {
+    params: {
+      "who": who,
+      "boardNo": boardNo,
+      "like": doesLike}
+    })
+    .then(function (response) {
+      console.log(response);
+      if(response == "success") {
+        loadLikeStatus();
+      }
+    })
+    .catch(function (error) {
+      console.log(error);
+    });
+}
+
+function loadLikeStatus() {
+
+  let boardNo = $("#boardNo").val();
+  axios.get(`/commboard/boardlike/status/${boardNo}`)
+    .then(function (data) {
+    })
+    .catch(function (error) {
+      console.log(error);
+    });
+}
 
 function ajaxtest() {
   $.ajax({
@@ -180,24 +294,26 @@ function proccessPostDate(regDate) {
   return "방금전";
 }
 
-function displayAllComments(commentList) {
+function displayAllComments(commentData) {
+  let commentList = commentData.responseDTO.dtoList;
+  let loginMemberId = commentData.loginMemberId;
+  console.log(loginMemberId);
+
   let output = `<ul class="list-group">`;
   if(!commentList || commentList.length == 0 ) {
     output+=`<li class="list-group-item">텅</li>`;
   } else {
     commentList.forEach(function (comment) {
       output += `
-        <li class="list-group-item">
+        <li class="list-group-item" id="comment_${comment.commentNo}">
           <img src="/images/avatar.png" style="width:50px; height:50px; border-radius: 50px;margin-right:15px;">
           <div class="flex-grow-1">
             <div class="fw-bold mb-1">${comment.content}</div>
             <div class="small">${proccessPostDate(comment.regDate)}</div>
           </div>
           <div class="text-end">
-            <div>
-              <span style="cursor: pointer">수정</span>
-              <span style="cursor: pointer">삭제</span>
-            </div>
+            <!--로그인 한 유저이고 작성자인 경우 수정, 삭제 버튼 보이도록-->
+          ${(loginMemberId == comment.commenter) ? `<div><span style="cursor: pointer" onclick="showEditComment(${comment.commentNo}, '${comment.content}');">수정</span><span style="cursor: pointer" onclick="removeEditComment(${comment.commentNo})">삭제</span></div>` : ''}
             <div class="small text-secondary">
               ${comment.commenter}
             </div>
@@ -210,11 +326,111 @@ function displayAllComments(commentList) {
   $("#commentList").html(output);
 }
 
-function displayPaginaation(data) {
+function removeEditComment(commentNo) {
+  if (!confirm("정말 이 댓글을 삭제하시겠습니까?")) {
+    return;
+  } else {
+    axios.delete(`/comment/${commentNo}`)
+    .then(function (response) {
+      console.log(response);
+      if(response.data.resultMessage == "SUCCESS") {
+        alert("댓글 삭제 완료");
+        getAllComments(currentPageNo);
 
+      }
+    })
+    .catch(function (error) {
+      if(error.response.data.resultMessage == "FAIL") {
+        alert("댓글 삭제 실패");
+      }
+      console.log(error);
+    });
+  }
 }
 
+function showEditComment(commentNo, oldContent) {
+  alert(commentNo, oldContent);
+  const commentItem = document.getElementById(`comment_${commentNo}`);
+  commentItem.innerHTML = `
+    <div class="flex-grow-1">
+      <input type="text" class="form-control" value="${oldContent}" id="editContent_${commentNo}"></input>
+    </div>
+    <div class="text-end">
+      <button type="button" class="btn btn-success" onclick="confirmEditComment(${commentNo})">저장</button>
+      <button type="button" class="btn btn-secondary" onclick="cancelEditComment()">취소</button>
+    </div>
+  `;
+}
+
+
+//
+function confirmEditComment(commentNo) {
+  const newContent = document.getElementById(`editContent_${commentNo}`).value;
+  if (!newContent) {
+    alert("내용을 입력하세요...");
+    return;
+  }
+
+  axios.patch(`/comment/${commentNo}`, {
+    content: newContent,
+  })
+    .then(function (response) {
+      console.log(response);
+      if(response.data.resultMessage == "SUCCESS") {
+        alert("<UNK>", pageNo);
+        getAllComments(currentPageNo);
+
+      }
+    })
+    .catch(function (error) {
+      if(error.response.data.resultMessage == "FAIL") {
+        alert("수정실패");
+      }
+      console.log(error);
+    });
+}
+
+function cancelEditComment() {
+  getAllComments(currentPageNo);
+}
+
+// 페이지네이션
+function displayPaginaation(pageData) {
+  console.log(pageData);
+  // 댓글이 없는 경우
+  if(pageData.total == 0) {
+    $("#commentPagination").html("");
+    return;
+  }
+  let output = `<ul class="pagination justify-content-center" style="margin:20px 0">`;
+  let prevPage = pageData.pageNo > 1 ? pageData.pageNo - 1 : 1;
+  // prev 버튼
+  output += `
+    <li class="page-item ${pageData.pageNo == 1? 'disabled': ''}">
+      <a class="page-link page-btn" href="#" data-page="${prevPage}">Prev</a>
+    </li>`;
+  // 페이지 번호 버튼
+  for (let i = pageData.start; i <= pageData.end; i++) {
+    let active = pageData.pageNo == i ? "active" : "";
+    output += `
+      <li class="page-item ${active}">
+        <a class="page-link page-btn" href="#" data-page="${i}">${i}</a>
+      </li>`;
+  }
+  // next 버튼
+  let nextPage = pageData.pageNo < pageData.end ? pageData.pageNo + 1 : pageData.last;
+  output += `
+    <li class="page-item ${pageData.pageNo == pageData.last ? 'disabled': ''}">
+      <a class="page-link page-btn" href="#" data-page="${nextPage}">Next</a>
+    </li></ul>`;
+  $("#commentPagination").html(output);
+}
+
+
 function getAllComments(pageNo) {
+
+  currentPageNo = pageNo;
+
   $.ajax({
     url: `/comment/all/${boardNo}/${pageNo}`,
     type: "GET",
@@ -225,8 +441,8 @@ function getAllComments(pageNo) {
       console.log(data);
       console.log(data.resultMessage);
       if (data.resultMessage == "SUCCESS") {
-        displayAllComments(data.data.dtoList);
-        displayPaginaation(data.data);
+        displayAllComments(data.data);
+        displayPaginaation(data.data.responseDTO);
       }
 
     },
@@ -298,67 +514,14 @@ function saveComment() {
     });
   }
 
+// 페이지 로드되면 호출됨,
 function getInputCommentContent() {
-  // 페이지 로드되면 호출됨
   let commentContent = localStorage.getItem("commentContent");
   if (commentContent != null || commentContent != "") {
     $("#commentContent").val(commentContent);
     localStorage.removeItem("commentContent");
   }
 }
-
-/* let status = [[${param.status}]]; */
-  $(function() {
-
-    getAllComments(pageNo);
-    getInputCommentContent();
-
-    $("#removeBtn").on("click", function(e) {
-      e.preventDefault();
-      $("#deleteModal").show();
-
-    });
-    $(".closeModalBtn").on("click", function(e) {
-      e.preventDefault();
-      $("#deleteModal").hide();
-    })
-
-    $("#modifyBtn").on("click", function(e) {
-      e.preventDefault();
-      const boardNo = $(this).data("boardno");
-      let link = $(this).data("link");
-      let url = "/board/modify?boardNo=" + boardNo;
-      if(link) {
-        url += `&${link}`;
-      }
-      location.href = url;
-    });
-
-    const urlSearchParams = new URLSearchParams(window.location.search);
-    const status = urlSearchParams.get("status");
-    console.log(status);
-    if(status == "success") {
-      $(".toast-body").html("수정완료");
-      $("#toastMessage").show();
-      // 2초 후에 toast 메시지 닫기
-      setTimeout(function() {
-        $("#toastMessage").fadeOut();
-      }, 3000);
-    } else if (status == "failure") {
-      $(".toast-body").html("수정실패");
-      $("#toastMessage").show();
-      // 2초 후에 toast 메시지 닫기
-      setTimeout(function() {
-        $("#toastMessage").fadeOut();
-      }, 3000);
-    } else if (status == "authFail") {
-      $(".toast-body").html("권한이 없습니다.");
-      $("#toastMessage").show();
-      setTimeout(function() {
-        $("#toastMessage").fadeOut();
-      }, 3000);
-    }
-  });
 
 
 </script>

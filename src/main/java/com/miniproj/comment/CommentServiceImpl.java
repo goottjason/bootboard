@@ -38,7 +38,20 @@ public class CommentServiceImpl implements CommentService {
       .dtoList(commentVOS)
       .total(totalCount)
       .build();
+  }
 
+  @Override
+  public int updateComment(CommentDTO commentDTO) {
+    return commentMapper.updateComment(commentDTO);
+  }
 
+  @Override
+  public int deleteComment(Integer commentNo) {
+    return commentMapper.deleteComment(commentNo);
+  }
+
+  @Override
+  public CommentVO getCommentByNo(Integer commentNo) {
+    return commentMapper.selectCommentByNo(commentNo);
   }
 }
