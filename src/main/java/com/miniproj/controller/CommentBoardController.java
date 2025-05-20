@@ -5,9 +5,11 @@ import com.miniproj.service.CommentBoardService;
 import com.miniproj.util.FileUploadUtil;
 import com.miniproj.util.GetClientIPAddr;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -184,13 +186,19 @@ public class CommentBoardController {
   // 글저장(ajax에서 요청)
   @PostMapping("/register")
   @ResponseBody // REST API 방식 (반환값이 json 등으로 직접 전송됨)
-  public ResponseEntity writeBoard(@Valid @ModelAttribute("board") HBoardDTO board, BindingResult bindingResult) throws IOException {
+  public ResponseEntity<MyResponseWithoutData> writeBoard(@Valid @ModelAttribute("board") CommBoardDTO commBoardDTO, BindingResult bindingResult, @RequestPart(value="files", required = false) List<MultipartFile> files) throws IOException {
 
     /*@ModelAttribute("board") --> th:object="${board}로 보낸 폼 데이터를 DTO 객체로 자동 바인딩
       @Valid --> 각 필드를 유효성 검사하여 실패한 필드와 메시지가 BindingResult 객체에 저장됨
       BindingResult --> @ModelAttribute 바로 뒤에 붙여야하고, 에러가 있으면 반환해줌*/
 
     // hasErrors() : 전체 오류가 있는지 여부 반환하는 메서드
+
+    log.info("{}", commBoardDTO);
+    log.info("{}", bindingResult);
+    log.info("{}", files);
+
+
     if(bindingResult.hasErrors()) {
 
       Map<String, String> errors = new HashMap<>();
@@ -210,18 +218,28 @@ public class CommentBoardController {
         badRequest() : 400 응답을 보냄
         응답 본문에 errors 객체를 보냄 (JSON 등으로 클라이언트(브라우저)에 전달)*/
 
-      return ResponseEntity.badRequest().body(errors);
+      return ResponseEntity.badRequest().body(new MyResponseWithoutData(400, bindingResult.getAllErrors(), "입력오류"));
     }
 
-    List<BoardUpFilesVODTO> upFilesVODTOS = fileUploadUtil.saveFiles(board.getMultipartFiles());
+    if (files != null && files.isEmpty()) {
+      List<BoardUpFilesVODTO> upFilesVODTOS = fileUploadUtil.saveFiles(files); // commBoardDTO.getMultipartFiles()
+      commBoardDTO.setUpfiles(upFilesVODTOS);
+      for (MultipartFile file : files) {
+        log.info("{}", file.getOriginalFilename());
+      }
+    }
+
+    boardService.saveBoardWithFiles(commBoardDTO);
+
+    /*
 
     // 실제 저장된 BoardUpFilesVODTO를 담은 리스트를 HBoardDTO에 담음
-    board.setUpfiles(upFilesVODTOS);
+    commBoardDTO.setUpfiles(upFilesVODTOS);
 
     // DTO를 각 DB에 저장 (게시글 insert, boardNo로 ref를 update, boardUpfiles테이블에 파일관련 insert)
-    boardService.saveBoardWithFiles(board);
+    boardService.saveBoardWithFiles(commBoardDTO);*/
 
-    return ResponseEntity.ok().build(); // .build()만 호출하면, 본문이 없는 200 OK 응답이 만들어짐
+    return ResponseEntity.ok().body(new MyResponseWithoutData(200, null, "SUCCESS")); // .build()만 호출하면, 본문이 없는 200 OK 응답이 만들어짐
   }
 
   // 답글저장(폼태그에서 요청)
@@ -368,8 +386,17 @@ public class CommentBoardController {
                                                 @RequestParam("like") String like) {
     log.info("{}님이 {}번 글을 {} 요청", who, boardNo, like);
 
+    // 작성자가 로그인 멤버인 경우
+    String writer = boardService.findBoardWriterByNo(boardNo);
+    if (writer != null && writer.equals(who)) {
+      log.warn("자기 글에서는 좋아요 불가능: {}", who);
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body("not-allowed");
+    }
+
     if("like".equals(like)) {
       boardService.likeBoard(boardNo, who);
+    } else if ("dislike".equals(like)) {
+      boardService.dislikeBoard(boardNo, who);
     }
 
     return ResponseEntity.ok("success");
@@ -380,8 +407,40 @@ public class CommentBoardController {
    * 좋아요 한 사람의 수
    * 3명의 멤버아이디 (top3) 외 몇명
    */
-  @GetMapping("/boardlike/status/${boardNo}")
-  public void getBoardLikeStatus() {
+  @GetMapping("/boardlike/status/{boardNo}")
+  public ResponseEntity<Map<String, Object>> getBoardLikeStatus(@PathVariable int boardNo, HttpSession session) {
+    Member loginMember = (Member) session.getAttribute("loginMember");
+    String memberId = (loginMember != null) ? loginMember.getMemberId(): "";
+
+    int totalLikes = boardService.countLikes(boardNo);
+
+    boolean liked = boardService.countHasLikedById(boardNo, memberId);
+
+    List<String> topLike = boardService.selectTopLikeMembers(boardNo, 3);
+
+    int remainder = totalLikes - topLike.size();
+
+    Map<String, Object> result = Map.of(
+      "liked", liked,
+      "count", totalLikes,
+      "topLikeMembers", topLike,
+      "remainingCount", remainder);
+    log.info("{}", result);
+    return ResponseEntity.ok(result);
 
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }

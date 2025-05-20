@@ -5,6 +5,16 @@
       layout:decorate="~{layout/basic.html}">
 <head>
   <link th:href="@{/css/register.css}" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <style>
+    .upload-area {
+      width: 100%;
+      height: 200px;
+      background-color: lightgray;
+      text-align: center;
+      line-height: 200px;
+    }
+  </style>
 </head>
 <body>
 
@@ -13,19 +23,19 @@
   <div class="row mt-3">
     <!-- board 객체의 필드(title, content, writer)로 전송되고, -->
     <!-- 파일 업로드할 때 필요한 속성(enctype="multipart/form-data") -->
-    <form id="boardForm" th:action="@{/commboard/register}" method="post" th:object="${board}"  enctype="multipart/form-data">
+    <form id="registerForm" th:action="@{/commboard/register}" method="post">
       <div class="input-group mb-3">
         <span class="input-group-text">Title</span>
-        <input type="text" class="form-control" th:field="*{title}" placeholder="Title...">
+        <input type="text" class="form-control" id="title" name="title" placeholder="Title...">
         <!-- 타임리프에서 제공하는 유틸리티 객체(#fields),'title' 필드에 검증 오류가 있으면 true, 없으면 false를 반환 -->
         <!-- title 필드에 발생한 모든 오류 메시지를 자동으로 출력 -->
-        <div th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></div>
+        <!--<div th:if="${#fields.hasErrors('title')}" th:errors="${board.title}"></div>-->
         <div id="error-title" class="error-message"></div>
       </div>
       <div class="input-group mb-3">
         <span class="input-group-text">Content</span>
-        <textarea class="form-control" th:field="*{content}" placeholder="Content..." rows="10"></textarea>
-        <div th:if="${#fields.hasErrors('content')}" th:errors="*{content}"></div>
+        <textarea class="form-control" id="content" name="content" placeholder="Content..." rows="10"></textarea>
+        <!--<div th:if="${#fields.hasErrors('content')}" th:errors="${board.content}"></div>-->
         <div id="error-content" class="error-message"></div>
       </div>
       <div class="input-group mb-3">
@@ -33,14 +43,18 @@
         <input type="text" class="form-control" name="writer" th:value="${session.loginMember.memberId}" placeholder="Writer..." readonly="readonly">
         <div id="error-writer" class="error-message"></div>
       </div>
-      <div class="input-group mb-3">
+
+      <!-- 첨부파일 드래그 앤 드롭 영역 -->
+      <div class="upload-area mb-3">파일을 여기에 드래그 앤 드롭하세요.</div>
+      <div id="preview"></div>
+
+
+      <!--<div class="input-group mb-3">
         <span class="input-group-text">첨부파일</span>
-        <input type="file" class="form-control" id="fileInput" th:field="*{multipartFiles}" multiple>
+        <input type="file" class="form-control" id="fileInput" name="multipartFiles" multiple>
         <div id="error-multipartFiles" class="error-message"></div>
-      </div>
-      <div id="preview">
+      </div>-->
         <!-- 첨부된 파일을 미리 볼 수 있는 영역 -->
-      </div>
       <div class="my-4">
         <div class="float-end">
           <button type="submit" class="btn btn-primary btn-lg">글쓰기</button>
@@ -53,7 +67,118 @@
 
 
 <script layout:fragment="script" th:inline="javascript">
+  let fileList = [];
 
+  function renderPreview() {
+    $("#preview").empty();
+    console.log(fileList);
+    fileList.forEach(function(file, index) {
+      if(file.type.startsWith("image/")) {
+        let reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = function(e) {
+          console.log(e);
+          let output = `
+            <div class="card position-relative" style="width:140px; height:160px;">
+              <button type="button" class="btn btn-sm btn-danger position-absolute" style="top:2px; right:2px;" onclick="removeFile(${index});">X</button>
+              <div class="card-body text-center">
+                <img src="${e.target.result}" style="height:80px; object-fit: cover;">
+                <div class="small mt-1 text-truncate">${file.name}</div>
+              </div>
+            </div>
+          `;
+          $("#preview").append(output);
+        }
+      } else { // 이미지 아닌 경우
+        let ext = file.name.split(".").pop().toUpperCase();
+          let output = `
+            <div class="card position-relative" style="width:140px; height:160px;">
+              <button type="button" class="btn btn-sm btn-danger position-absolute" style="top:2px; right:2px;" onclick="removeFile(${index});">X</button>
+              <div class="card-body text-center">
+              <div class="boarder bg-light" style="height:80px;"><span>${ext}</span></div>
+              <div class="small mt-1 text-truncate">${file.name}</div>
+              </div>
+            </div>
+          `;
+        $("#preview").append(output);
+      }
+    });
+  }
+
+  $("#registerForm").on("submit", function(e){
+    e.preventDefault();
+    console.log(e.target);
+    let form =e.target;
+    let formData = new FormData(form);
+    console.log(formData);
+    // 파일 추가
+    fileList.forEach(function(file) {
+      formData.append("files", file);
+    });
+    console.log(formData);
+
+    axios.post("/commboard/register", formData)
+      .then(response => {
+        console.log(response);
+        if(response.data.msg == "SUCCESS"){
+          location.href="/commboard/list";
+        }
+      })
+      .catch(error => {
+        console.log(error);
+        error.response.data.data.forEach(err => {
+          let field = err.field;
+          let message = err.defaultMessage;
+          $(`.field-error[data-field="${field}"]`).text(message);
+        });
+      });
+
+  });
+
+  // 드래그 앤 드롭
+  $(".upload-area").on("dragenter dragover", function(e){
+    e.preventDefault();
+    console.log("드래그");
+  }).on("drop", function(e){
+    e.preventDefault();
+
+    const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1MB
+
+    console.log(e.originalEvent.dataTransfer.files);
+    console.log("드롭");
+
+    let files = Array.from(e.originalEvent.dataTransfer.files);
+    files.forEach(function(file){
+      if(file.size > MAX_FILE_SIZE) {
+        alert("파일당 1MB를 초과할 수 없습니다.");
+      } else {
+        fileList.push(file);
+      }
+    });
+
+    renderPreview();
+  });
+
+  // 미리보기 삭제 (X)
+  function removeFile(index) {
+    fileList.splice(index, 1);
+    renderPreview();
+  }
+  // 리셋버튼 클릭시
+
+  $("#registerForm").on("reset", function(e){
+    fileList = [];
+    $("#preview").empty();
+    $(".field-error").text("");
+  });
+
+
+
+
+
+
+
+  /*
 
   let selectedFiles = [];
 
@@ -206,7 +331,7 @@
   $("#boardForm").on("reset", function(e) {
     selectedFiles = [];
     $("#preview").empty();
-  });
+  });*/
 </script>
 </body>
 </html>

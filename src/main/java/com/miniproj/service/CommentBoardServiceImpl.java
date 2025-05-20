@@ -30,7 +30,7 @@ public class CommentBoardServiceImpl implements CommentBoardService {
 
   @Override
   @Transactional(rollbackFor = Exception.class) // 스프링에서 도중에 뭔가 에러나면 자동으로 롤백시켜줌
-  public void saveBoardWithFiles(HBoardDTO board) {
+  public void saveBoardWithFiles(CommBoardDTO board) {
 
     // 1. 게시글 저장
     boardMapper.insertNewBoard(board);
@@ -240,4 +240,33 @@ public class CommentBoardServiceImpl implements CommentBoardService {
   public int likeBoard(int boardNo, String who) {
     return boardMapper.insertLike(boardNo, who);
   }
+
+  @Override
+  public int countLikes(int boardNo) {
+    return boardMapper.selectCountLikes(boardNo);
+  }
+
+  @Override
+  public boolean countHasLikedById(int boardNo, String memberId) {
+    if(boardMapper.selectCountHasLikedById(boardNo, memberId) == 1) {
+      return true;
+    }
+    return false;
+  }
+
+  @Override
+  public List<String> selectTopLikeMembers(int boardNo, int limit) {
+    return boardMapper.selectTopLikeMembers(boardNo, limit);
+  }
+
+  @Override
+  public int dislikeBoard(int boardNo, String who) {
+    return boardMapper.deleteLike(boardNo, who);
+  }
+
+  @Override
+  public String findBoardWriterByNo(int boardNo) {
+    return boardMapper.selectBoardWriterByNo(boardNo);
+  }
+
 }

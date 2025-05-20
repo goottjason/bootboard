@@ -10,7 +10,7 @@ public interface CommentBoardService {
 
   List<HBoardVO> getAllBoards();
 
-  void saveBoardWithFiles(HBoardDTO board);
+  void saveBoardWithFiles(CommBoardDTO board);
 
   List<HBoardDetailInfo> viewBoardByNo(int boardNo, String ipAddr);
 
@@ -30,4 +30,14 @@ public interface CommentBoardService {
   PagingResponseDTO<HBoardPageDTO> getListWithSearch(PagingRequestDTO pagingRequestDTO);
 
   int likeBoard(int boardNo, String who);
+
+  int countLikes(int boardNo);
+
+  boolean countHasLikedById(int boardNo, String memberId);
+
+  List<String> selectTopLikeMembers(int boardNo, int limit);
+
+  int dislikeBoard(int boardNo, String who);
+
+  String findBoardWriterByNo(int boardNo);
 }

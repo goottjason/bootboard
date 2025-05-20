@@ -148,6 +148,7 @@ $(function() {
 
   getAllComments(pageNo);
   getInputCommentContent();
+  loadLikeStatus()
 
   // 좋아요 클릭시,
   $("#heart-icon").click(function() {
@@ -211,7 +212,11 @@ $(function() {
 });
 
 function sendBoardLike(doesLike) {
-  let who = "user01";
+
+  let who = preAuth();
+  if (who == null) {
+    return;
+  }
   let boardNo = $("#boardNo").val();
   // boardNo = $("#boardNo").data("boardNo");
   console.log(who, boardNo, doesLike);
@@ -223,12 +228,15 @@ function sendBoardLike(doesLike) {
     })
     .then(function (response) {
       console.log(response);
-      if(response == "success") {
+      if(response.data == "success") {
         loadLikeStatus();
       }
     })
     .catch(function (error) {
       console.log(error);
+      if(error.response.data == "not-allowed") {
+        alert("자기 글에는 로그인 할 수 없어요.");
+      }
     });
 }
 
@@ -236,7 +244,30 @@ function loadLikeStatus() {
 
   let boardNo = $("#boardNo").val();
   axios.get(`/commboard/boardlike/status/${boardNo}`)
-    .then(function (data) {
+    .then(function (res) {
+      let data = res.data;
+      console.log(data);
+      if (data.liked) {
+        $("#heart-icon").removeClass("fa-regular").addClass("fa-solid");
+      } else {
+        $("#heart-icon").removeClass("fa-solid").addClass("fa-regular");
+      }
+      $("#like-count").html(data.count);
+      let memberList = data.topLikeMembers;
+      let remaining = data.remainingCount;
+      console.log(memberList, remaining);
+      let output = ``;
+      if (memberList.length > 0) {
+        if (remaining == 0) {
+          output = `${memberList.join(",")}님이 좋아합니다.`;
+        } else {
+          output = `${memberList.join(",")}님 외 ${remaining}명이 좋아합니다.`;
+        }
+      } else {
+        output = `아직 좋아요한 사람이 없습니다.`;
+      }
+      $("#like-people").html(output);
+
     })
     .catch(function (error) {
       console.log(error);

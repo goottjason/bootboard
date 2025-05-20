@@ -13,7 +13,7 @@ public interface CommentBoardMapper {
 
   @Insert("insert into hboard(title, content, writer, boardType) values(#{title}, #{content}, #{writer}, 'cboard')")
   @Options(useGeneratedKeys = true, keyProperty = "boardNo")
-  int insertNewBoard(HBoardDTO hBoardDTO);
+  int insertNewBoard(CommBoardDTO commBoardDTO);
 
   @Update("update hboard set ref = #{boardNo} where boardNo = #{boardNo} and boardType = 'cboard'")
   int updateRefToBoardNo(@Param("boardNo") int boardNo);
@@ -90,4 +90,20 @@ public interface CommentBoardMapper {
 
   @Insert("insert into boardlike(who, boardNo) values(#{who}, #{boardNo})")
   int insertLike(@Param("boardNo") int boardNo, @Param("who") String who);
+
+  @Select("select count(*) from boardlike where boardNo = #{boardNo}")
+  int selectCountLikes(int boardNo);
+
+  @Select("select count(*) from boardlike where boardNo = #{boardNo} and who = #{memberId}")
+  int selectCountHasLikedById(@Param("boardNo") int boardNo, @Param("memberId") String memberId);
+
+  // select who from boardlike where boardNo = #{boardNo} order by no desc limit 0, 3
+  @Select("select who from boardlike where boardNo = #{boardNo} order by no desc limit 0, #{limit}")
+  List<String> selectTopLikeMembers(@Param("boardNo") int boardNo, @Param("limit") int limit);
+
+  @Delete("delete from boardlike where boardNo = #{boardNo} and who = #{who}")
+  int deleteLike(int boardNo, String who);
+
+  @Select("select writer from hboard where boardNo = #{boardNo}")
+  String selectBoardWriterByNo(int boardNo);
 }

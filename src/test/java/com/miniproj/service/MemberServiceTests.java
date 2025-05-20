@@ -20,11 +20,11 @@ public class MemberServiceTests {
   @Test
   public void testRegister() {
     Member member = Member.builder()
-      .memberId("user02")
+      .memberId("user05")
       .memberPwd("1234")
-      .memberName("유저01")
-      .email("us3ws01@abc.com")
-      .mobile("010-5434-6246")
+      .memberName("유저04")
+      .email("us35501@abc.com")
+      .mobile("010-5544-6446")
       .gender("M")
       // .memberImg("user01.png")
       .build();
