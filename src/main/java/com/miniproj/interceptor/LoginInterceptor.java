@@ -71,11 +71,8 @@ public class LoginInterceptor implements HandlerInterceptor {
         if(redirectUrl.contains("view")) {
           int boardNo = Integer.parseInt(request.getParameter("boardNo"));
           ses.setAttribute("destPath", "/commboard/viewBoard?boardNo=" + boardNo);
-
         }
       }
-
-
 
       // 자동 로그인 한 유저
       // 쿠키검사하여 자동로그인 쿠키 존재여부
@@ -115,6 +112,7 @@ public class LoginInterceptor implements HandlerInterceptor {
     log.info("====================================== postHandle() 호출");
 
     if (request.getMethod().equalsIgnoreCase("POST")) {
+
       Map<String, Object> model = modelAndView.getModel();
       Member loginMember = (Member) model.get("loginMember");
       log.info("loginMember : {}", loginMember);

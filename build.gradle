@@ -55,6 +55,10 @@ dependencies {
   implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6'
 
 
+  // AOP
+  implementation 'org.springframework.boot:spring-boot-starter-aop'
+
+  implementation 'com.slack.api:slack-api-client:1.45.3'
 }
 
 tasks.named('test') {

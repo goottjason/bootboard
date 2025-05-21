@@ -3,7 +3,9 @@ package com.miniproj.controller.member;
 import com.miniproj.domain.LoginDTO;
 import com.miniproj.domain.Member;
 import com.miniproj.service.MemberService;
+import com.miniproj.util.GetClientIPAddr;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -31,8 +33,10 @@ public class MemberController {
   }
 
   @PostMapping("/login")
-  public void login(LoginDTO loginDTO, Model model) {
+  public void login(LoginDTO loginDTO, Model model, HttpServletRequest req) {
     log.info("Controller | loginDTO : {}", loginDTO);
+
+    loginDTO.setIpAddress(GetClientIPAddr.getClientIP(req));
 
     Member loginMember = memberService.login(loginDTO);
 
