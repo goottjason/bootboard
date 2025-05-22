@@ -73,7 +73,7 @@ public class LoginLogAOP {
     // 파일명
     writeLog(fileName, logContent.toString());
 
-    return result;
+    return result; // target 메서드 수행 후, 반환되는 값을 다시 컨트롤러 단으로 돌려줌
   }
 
   private void writeLog(String fileName, String logContent) {

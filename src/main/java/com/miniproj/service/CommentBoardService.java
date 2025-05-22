@@ -40,4 +40,6 @@ public interface CommentBoardService {
   int dislikeBoard(int boardNo, String who);
 
   String findBoardWriterByNo(int boardNo);
+
+  BoardUpFilesVODTO getUploadFileInfo(int fileId);
 }

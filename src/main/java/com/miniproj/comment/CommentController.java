@@ -2,6 +2,7 @@ package com.miniproj.comment;
 
 import com.miniproj.domain.*;
 import com.miniproj.exception.CommentNotFoundException;
+import com.miniproj.util.SlackNotifier;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class CommentController {
   private final CommentService commentService;
+  private final SlackNotifier notifier;
 
   @GetMapping("/all/{boardNo}/{pageNo}")
   public ResponseEntity<MyResponseWithData> getAllCommentByBoardNo(@PathVariable("boardNo") int boardNo,
@@ -58,6 +60,7 @@ public class CommentController {
       int result = commentService.registerComment(commentDTO);
       return ResponseEntity.ok(MyResponseWithData.success());
     } catch (Exception e) {
+      notifier.notify("댓글 저장 예외발생", e.getMessage());
       return ResponseEntity.ok(MyResponseWithData.fail());
       // ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server Error!");
     }

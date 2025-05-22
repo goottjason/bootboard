@@ -106,4 +106,7 @@ public interface CommentBoardMapper {
 
   @Select("select writer from hboard where boardNo = #{boardNo}")
   String selectBoardWriterByNo(int boardNo);
+
+  @Select("select * from boardupfiles where fileNo = #{fileNo}")
+  BoardUpFilesVODTO selectUploadFileById(int fileNo);
 }

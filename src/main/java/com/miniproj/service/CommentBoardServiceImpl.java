@@ -269,4 +269,9 @@ public class CommentBoardServiceImpl implements CommentBoardService {
     return boardMapper.selectBoardWriterByNo(boardNo);
   }
 
+  @Override
+  public BoardUpFilesVODTO getUploadFileInfo(int fileNo) {
+    return boardMapper.selectUploadFileById(fileNo);
+  }
+
 }

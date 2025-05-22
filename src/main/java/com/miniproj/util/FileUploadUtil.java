@@ -42,6 +42,7 @@ public class FileUploadUtil {
   public List<BoardUpFilesVODTO> saveFiles(List<MultipartFile> multipartFileList) throws IOException {
     List<BoardUpFilesVODTO> resultList = new ArrayList<>();
 
+    log.info("<UNK> <UNK> <UNK> <UNK> <UNK> <UNK> <UNK> <UNK> <UNK>");
     // 첨부파일 리스트가 null이거나 비어있으면 빈 리스트 객체를 return
     if (multipartFileList == null || multipartFileList.isEmpty()) return resultList;
 

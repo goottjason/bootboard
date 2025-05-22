@@ -4,6 +4,7 @@ import com.miniproj.domain.*;
 import com.miniproj.service.CommentBoardService;
 import com.miniproj.util.FileUploadUtil;
 import com.miniproj.util.GetClientIPAddr;
+import com.miniproj.util.SlackNotifier;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -196,7 +197,7 @@ public class CommentBoardController {
 
     log.info("{}", commBoardDTO);
     log.info("{}", bindingResult);
-    log.info("{}", files);
+    log.info("■■■■■■■■ {}", files);
 
 
     if(bindingResult.hasErrors()) {
@@ -221,23 +222,15 @@ public class CommentBoardController {
       return ResponseEntity.badRequest().body(new MyResponseWithoutData(400, bindingResult.getAllErrors(), "입력오류"));
     }
 
-    if (files != null && files.isEmpty()) {
+    if (files != null && !files.isEmpty()) {
       List<BoardUpFilesVODTO> upFilesVODTOS = fileUploadUtil.saveFiles(files); // commBoardDTO.getMultipartFiles()
       commBoardDTO.setUpfiles(upFilesVODTOS);
       for (MultipartFile file : files) {
-        log.info("{}", file.getOriginalFilename());
+        log.info("■■■■■■■■file.getOriginalFilename() : {}", file.getOriginalFilename());
       }
     }
 
     boardService.saveBoardWithFiles(commBoardDTO);
-
-    /*
-
-    // 실제 저장된 BoardUpFilesVODTO를 담은 리스트를 HBoardDTO에 담음
-    commBoardDTO.setUpfiles(upFilesVODTOS);
-
-    // DTO를 각 DB에 저장 (게시글 insert, boardNo로 ref를 update, boardUpfiles테이블에 파일관련 insert)
-    boardService.saveBoardWithFiles(commBoardDTO);*/
 
     return ResponseEntity.ok().body(new MyResponseWithoutData(200, null, "SUCCESS")); // .build()만 호출하면, 본문이 없는 200 OK 응답이 만들어짐
   }

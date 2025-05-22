@@ -41,7 +41,13 @@
 
     <div th:if="${detail.upfiles != null and !#lists.isEmpty(detail.upfiles)}">
       <div th:each="file : ${detail.upfiles}">
-        <div th:if="${file != null}">
+        <div>
+          <img th:if="${file.isImage}" th:src="@{${file.thumbFileName}}" />
+          <!--<a th:href="@{${file.filePath}}" th:text="${file.originalFileName}" download></a>-->
+          <a th:href="@{/download/{fileId}(fileId=${file.fileNo})}" th:text="${file.originalFileName}" download></a>
+
+        </div>
+        <!--<div th:if="${file != null}">
           <div th:if="${file.isImage == true}">
             <img th:src="@{${file.thumbFileName}}">
             <div th:text="${file.originalFileName}"></div>
@@ -49,7 +55,7 @@
           <div th:if="${file.isImage != true}">
             <div th:text="${file.originalFileName}"></div>
           </div>
-        </div>
+        </div>-->
       </div>
     </div>
     <div th:if="${detail.upfiles == null or #lists.isEmpty(detail.upfiles)}">
