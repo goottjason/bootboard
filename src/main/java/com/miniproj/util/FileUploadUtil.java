@@ -57,7 +57,6 @@ public class FileUploadUtil {
 
 
     for (MultipartFile file: multipartFileList) {
-
       // 혹시 첨부파일이 없으면 다음 루프로 건너뜀
       if(file.isEmpty()) continue;
 
