@@ -83,7 +83,7 @@ public class CommentBoardServiceImpl implements CommentBoardService {
           b.setReadCount(b.getReadCount() + 1);
         }
       }
-    }
+    } // 테스트
 
     return boardInfo;
   }
