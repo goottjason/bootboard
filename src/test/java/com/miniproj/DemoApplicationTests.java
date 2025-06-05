@@ -11,5 +11,6 @@ class DemoApplicationTests {
 	}
 
   // 로그인 기능 구현중
+  // 집에와서 하고, 완성
 
 }
