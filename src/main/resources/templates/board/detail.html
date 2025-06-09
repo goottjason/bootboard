@@ -34,7 +34,8 @@
     </div>
     <div class="input-group mb-3">
       <span class="input-group-text">postDate</span>
-      <input type="text" class="form-control" th:value="${#temporals.format(detail.postDate, 'yyyy-MM-dd HH:mm')}" placeholder="postDate..." readonly>
+      <input type="text" class="form-control" th:value="${#temporals.format(detail.postDate, 'yyyy-MM-dd HH:mm')}"
+             placeholder="postDate..." readonly>
       <div id="error-postDate" class="error-message"></div>
     </div>
 
@@ -60,18 +61,20 @@
     <div class="my-4">
       <div class="float-end">
         <a th:href="|@{/board/list}?${pagingRequestDTO.link}|" class="btn btn-primary btn-lg">목록으로</a>
-        <a th:href="@{/board/list}" class="btn btn-primary btn-lg" id="modifyBtn" th:data-boardno="${detail.boardNo}" th:data-link="${pagingRequestDTO.link}">수정</a>
+        <a th:href="@{/board/list}" class="btn btn-primary btn-lg" id="modifyBtn" th:data-boardno="${detail.boardNo}"
+           th:data-link="${pagingRequestDTO.link}">수정</a>
         <!--<a th:href="@{/board/list}" class="btn btn-primary btn-lg" id="modifyBtn" th:data-boardno="${detail.boardNo}" th:onclick="|location.href='/board/modify(boardNo=${detail.boardNo})&${pagingRequestDTO.link}'|">수정</a>-->
-        <a th:href="@{/board/list}" class="btn btn-primary btn-lg" id="removeBtn" th:data-link="${pagingRequestDTO.link}">삭제</a>
+        <a th:href="@{/board/list}" class="btn btn-primary btn-lg" id="removeBtn"
+           th:data-link="${pagingRequestDTO.link}">삭제</a>
         <!--수정하기, 답글달기 등-->
         <a th:href="@{/board/showReplyForm(boardNo=${detail.boardNo},
-          ref=${detail.getRef()}, step=${detail.getStep()}, refOrder=${detail.getRefOrder()}, pageNo=${pageNo})}" class="btn btn-primary btn-lg">답글작성</a>
+          ref=${detail.getRef()}, step=${detail.getStep()}, refOrder=${detail.getRefOrder()}, pageNo=${pageNo})}"
+           class="btn btn-primary btn-lg">답글작성</a>
 
       </div>
     </div>
 
   </div>
-
 
 
   <!-- Toast -->
@@ -118,24 +121,24 @@
 <script layout:fragment="script" th:inline="javascript">
 
   /* let status = [[${param.status}]]; */
-  $(function() {
+  $(function () {
 
-    $("#removeBtn").on("click", function(e) {
+    $("#removeBtn").on("click", function (e) {
       e.preventDefault();
       $("#deleteModal").show();
 
     });
-    $(".closeModalBtn").on("click", function(e) {
+    $(".closeModalBtn").on("click", function (e) {
       e.preventDefault();
       $("#deleteModal").hide();
     })
 
-    $("#modifyBtn").on("click", function(e) {
+    $("#modifyBtn").on("click", function (e) {
       e.preventDefault();
       const boardNo = $(this).data("boardno");
       let link = $(this).data("link");
       let url = "/board/modify?boardNo=" + boardNo;
-      if(link) {
+      if (link) {
         url += `&${link}`;
       }
       location.href = url;
@@ -144,24 +147,24 @@
     const urlSearchParams = new URLSearchParams(window.location.search);
     const status = urlSearchParams.get("status");
     console.log(status);
-    if(status == "success") {
+    if (status == "success") {
       $(".toast-body").html("수정완료");
       $("#toastMessage").show();
       // 2초 후에 toast 메시지 닫기
-      setTimeout(function() {
+      setTimeout(function () {
         $("#toastMessage").fadeOut();
       }, 3000);
     } else if (status == "failure") {
       $(".toast-body").html("수정실패");
       $("#toastMessage").show();
       // 2초 후에 toast 메시지 닫기
-      setTimeout(function() {
+      setTimeout(function () {
         $("#toastMessage").fadeOut();
       }, 3000);
     } else if (status == "authFail") {
       $(".toast-body").html("권한이 없습니다.");
       $("#toastMessage").show();
-      setTimeout(function() {
+      setTimeout(function () {
         $("#toastMessage").fadeOut();
       }, 3000);
     }

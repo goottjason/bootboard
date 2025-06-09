@@ -86,7 +86,7 @@ public class CommentBoardController {
     log.info("pagingRequestDTO:{}", pagingRequestDTO);
 
     // select * ... 로 조회하여 HBoardVO 객체를 담은 리스트를 반환받음
-    PagingResponseDTO<HBoardPageDTO> responseDTO  = boardService.getListWithSearch(pagingRequestDTO);
+    PagingResponseDTO<HBoardPageDTO> responseDTO = boardService.getListWithSearch(pagingRequestDTO);
 
     log.info("responseDTO:{}", responseDTO.getDtoList());
     // 반환받은 리스트를 컨트롤러에서 뷰(화면)로 데이터를 전달할 때 사용
@@ -110,9 +110,9 @@ public class CommentBoardController {
 
   // 답글등록페이지
   @GetMapping("/showReplyForm")
-  public String showReplyForm(@RequestParam(value="ref") int ref,
-                              @RequestParam(value="step") int step,
-                              @RequestParam(value="refOrder") int refOrder, Model model) {
+  public String showReplyForm(@RequestParam(value = "ref") int ref,
+                              @RequestParam(value = "step") int step,
+                              @RequestParam(value = "refOrder") int refOrder, Model model) {
 
     HBoardDTO reply = new HBoardDTO();
     reply.setRef(ref);
@@ -126,7 +126,7 @@ public class CommentBoardController {
 
   // 글상세페이지
   @GetMapping("/viewBoard")
-  public String boardDetail(@RequestParam(value="boardNo", required = false, defaultValue = "-1") int boardNo,
+  public String boardDetail(@RequestParam(value = "boardNo", required = false, defaultValue = "-1") int boardNo,
                             @RequestParam(value = "pageNo", required = false, defaultValue = "1") int pageNo,
                             PagingRequestDTO pagingRequestDTO, Model model,
                             HttpServletRequest request, RedirectAttributes redirectAttributes) {
@@ -143,7 +143,7 @@ public class CommentBoardController {
     List<HBoardDetailInfo> detailInfos = boardService.viewBoardByNo(boardNo, ipAddr);
 
     log.info("detailInfos : {}", detailInfos.get(0));
-    if("Y".equals(detailInfos.get(0).getIsDelete())) {
+    if ("Y".equals(detailInfos.get(0).getIsDelete())) {
       redirectAttributes.addFlashAttribute("error", "삭제되거나 존재되지 않는 글입니다.");
       return "redirect:/commboard/list";
     }
@@ -160,7 +160,7 @@ public class CommentBoardController {
 
   // 게시글 수정하기
   @GetMapping("/modify")
-  public String showModifyForm(@RequestParam(value="boardNo") int boardNo,
+  public String showModifyForm(@RequestParam(value = "boardNo") int boardNo,
                                PagingRequestDTO pagingRequestDTO, Model model) {
     log.info("{}", boardNo);
 
@@ -187,7 +187,7 @@ public class CommentBoardController {
   // 글저장(ajax에서 요청)
   @PostMapping("/register")
   @ResponseBody // REST API 방식 (반환값이 json 등으로 직접 전송됨)
-  public ResponseEntity<MyResponseWithoutData> writeBoard(@Valid @ModelAttribute("board") CommBoardDTO commBoardDTO, BindingResult bindingResult, @RequestPart(value="files", required = false) List<MultipartFile> files) throws IOException {
+  public ResponseEntity<MyResponseWithoutData> writeBoard(@Valid @ModelAttribute("board") CommBoardDTO commBoardDTO, BindingResult bindingResult, @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException {
 
     /*@ModelAttribute("board") --> th:object="${board}로 보낸 폼 데이터를 DTO 객체로 자동 바인딩
       @Valid --> 각 필드를 유효성 검사하여 실패한 필드와 메시지가 BindingResult 객체에 저장됨
@@ -200,7 +200,7 @@ public class CommentBoardController {
     log.info("■■■■■■■■ {}", files);
 
 
-    if(bindingResult.hasErrors()) {
+    if (bindingResult.hasErrors()) {
 
       Map<String, String> errors = new HashMap<>();
 
@@ -239,7 +239,7 @@ public class CommentBoardController {
   @PostMapping("/saveReply")
   public String saveReply(@Valid @ModelAttribute("reply") HBoardDTO reply, BindingResult bindingResult) throws IOException {
 
-    if(bindingResult.hasErrors()) {
+    if (bindingResult.hasErrors()) {
       return "/commboard/replyForm";
     }
 
@@ -256,7 +256,7 @@ public class CommentBoardController {
   public ResponseEntity<MyResponseWithoutData> modifyRemoveFileCheck(@RequestParam("removeFileNo") int removeFilePK) {
     log.info("삭제하자 {}", removeFilePK);
     for (BoardUpFilesVODTO file : modifyFileList) {
-      if(removeFilePK == file.getFileNo()) {
+      if (removeFilePK == file.getFileNo()) {
         file.setFileStatus(BoardUpFileStatus.DELETE); // 삭제예정 표시
       }
     }
@@ -265,7 +265,7 @@ public class CommentBoardController {
   }
 
   private void outputCurModifyFileList() {
-    for(BoardUpFilesVODTO file : modifyFileList) {
+    for (BoardUpFilesVODTO file : modifyFileList) {
       log.info("outputCurModifyFileList : {}", file);
     }
   }
@@ -274,7 +274,7 @@ public class CommentBoardController {
   public ResponseEntity<MyResponseWithoutData> cancelRemFiles() {
     log.info("파일리스트의 모든 파일 삭제 취소처리");
 
-    for(BoardUpFilesVODTO file : modifyFileList) {
+    for (BoardUpFilesVODTO file : modifyFileList) {
       file.setFileStatus(null);
       log.info("{}", file);
     }
@@ -285,16 +285,16 @@ public class CommentBoardController {
   @PostMapping(value = "/modifyBoardSave")
   public String modifyBoardSave(@Valid @ModelAttribute("board") HBoardDTO board, BindingResult bindingResult,
                                 @ModelAttribute("pagingRequestDTO") PagingRequestDTO pagingRequestDTO,
-                                @RequestParam(value = "modifyNewFile", required=false) MultipartFile[] modifyNewFile, RedirectAttributes redirectAttributes) {
+                                @RequestParam(value = "modifyNewFile", required = false) MultipartFile[] modifyNewFile, RedirectAttributes redirectAttributes) {
     log.info("수정하자 {}", board);
     String link = pagingRequestDTO.getLink();
-    if(bindingResult.hasErrors()) {
+    if (bindingResult.hasErrors()) {
 
       // "redirect:/board/viewBoard?boardNo=" + board.getBoardNo();
       redirectAttributes.addFlashAttribute("errors", bindingResult.getAllErrors());
       redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.board", bindingResult);
       redirectAttributes.addFlashAttribute("board", board);
-      for (ObjectError error :bindingResult.getAllErrors()) {
+      for (ObjectError error : bindingResult.getAllErrors()) {
         log.info("에러메시지 {}", error.getDefaultMessage());
       }
       return "redirect:/commboard/modify?boardNo=" + board.getBoardNo() + "&" + link;
@@ -305,11 +305,11 @@ public class CommentBoardController {
       if (modifyNewFile != null && modifyNewFile.length > 0) {
         List<MultipartFile> fileList = new ArrayList<>();
         for (MultipartFile file : modifyNewFile) {
-          if(!file.isEmpty()) {
+          if (!file.isEmpty()) {
             fileList.add(file);
           }
         }
-        if(!fileList.isEmpty()) {
+        if (!fileList.isEmpty()) {
           List<BoardUpFilesVODTO> savedFiles = fileUploadUtil.saveFiles(fileList);
           for (BoardUpFilesVODTO fileInfo : savedFiles) {
             fileInfo.setFileStatus(BoardUpFileStatus.INSERT);
@@ -329,7 +329,7 @@ public class CommentBoardController {
       redirectAttributes.addAttribute("status", "failure");
     }
 
-    return "redirect:/commboard/viewBoard?boardNo=" + board.getBoardNo() +"&" + link;
+    return "redirect:/commboard/viewBoard?boardNo=" + board.getBoardNo() + "&" + link;
 
 /*    if(bindingResult.hasErrors()) {
       log.info("{}", bindingResult);
@@ -345,7 +345,7 @@ public class CommentBoardController {
     List<BoardUpFilesVODTO> upFilesVODTOS = boardService.removeBoard(boardNo);
 
     try {
-      if(upFilesVODTOS != null) {
+      if (upFilesVODTOS != null) {
         // 하드에서 삭제해주면 됨
         for (BoardUpFilesVODTO upFilesVODTO : upFilesVODTOS) {
           log.info("{}", upFilesVODTO);
@@ -368,6 +368,7 @@ public class CommentBoardController {
   /**
    * 좋아요 또는 취소 요청 처리 (like/dislike
    * 추가: 자기글은 좋아요 하지 못하도록 처리하자.
+   *
    * @param who
    * @param boardNo
    * @param like
@@ -386,7 +387,7 @@ public class CommentBoardController {
       return ResponseEntity.status(HttpStatus.FORBIDDEN).body("not-allowed");
     }
 
-    if("like".equals(like)) {
+    if ("like".equals(like)) {
       boardService.likeBoard(boardNo, who);
     } else if ("dislike".equals(like)) {
       boardService.dislikeBoard(boardNo, who);
@@ -403,7 +404,7 @@ public class CommentBoardController {
   @GetMapping("/boardlike/status/{boardNo}")
   public ResponseEntity<Map<String, Object>> getBoardLikeStatus(@PathVariable int boardNo, HttpSession session) {
     Member loginMember = (Member) session.getAttribute("loginMember");
-    String memberId = (loginMember != null) ? loginMember.getMemberId(): "";
+    String memberId = (loginMember != null) ? loginMember.getMemberId() : "";
 
     int totalLikes = boardService.countLikes(boardNo);
 
@@ -422,18 +423,6 @@ public class CommentBoardController {
     return ResponseEntity.ok(result);
 
   }
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 }

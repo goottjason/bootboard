@@ -11,7 +11,8 @@
   <h1>게시판</h1>
   <div th:if="${error}" class="alert alert-danger" role="alert">[[${error}]]</div>
   <button type="button" class="btn btn-secondary btn-lg d-flex float-end"
-          th:onclick="|location.href='@{/commboard/register}'|">글쓰기</button>
+          th:onclick="|location.href='@{/commboard/register}'|">글쓰기
+  </button>
 
   <!-- 검색 : 검색결과도 페이징해서 와야 함... -->
   <form action="/commboard/list" method="get">
@@ -23,7 +24,8 @@
       <option value="tc" th:selected="${pagingRequestDTO.type == 'tc'}">제목+내용</option>
       <option value="tcw" th:selected="${pagingRequestDTO.type == 'tcw'}">제목+내용+작성자</option>
     </select>
-    <input type="text" class="form-control" name="keyword" placeholder="검색어 입력..." th:value="${pagingRequestDTO.keyword}">
+    <input type="text" class="form-control" name="keyword" placeholder="검색어 입력..."
+           th:value="${pagingRequestDTO.keyword}">
     <button type="submit" class="btn btn-primary">검색</button>
     <button type="reset" class="btn btn-primary">초기화</button>
   </form>
@@ -40,7 +42,9 @@
     </tr>
     </thead>
     <tbody>
-    <tr th:if="${#lists.isEmpty(responseDTO.dtoList)}"><td colspan="8" class="text-center">검색결과없음</td></tr>
+    <tr th:if="${#lists.isEmpty(responseDTO.dtoList)}">
+      <td colspan="8" class="text-center">검색결과없음</td>
+    </tr>
     <tr th:if="${!#lists.isEmpty(responseDTO.dtoList)}" th:each="board : ${responseDTO.dtoList}">
       <td th:text="${board.boardNo}">번호</td>
       <td>
@@ -48,7 +52,8 @@
         <span th:if="${board.isDelete == 'Y'}" style="color:gray;">[삭제된 글입니다]</span>
         <div th:if="${board.isDelete != 'Y'}" th:style="|margin-left: calc(${board.step} * 20px)|">
           <span th:if="${board.step > 0}">↳</span>
-          <a th:href="|@{/commboard/viewBoard(boardNo=${board.boardNo})}&${pagingRequestDTO.getLink()}|" th:text="${board.title}">제목</a>
+          <a th:href="|@{/commboard/viewBoard(boardNo=${board.boardNo})}&${pagingRequestDTO.getLink()}|"
+             th:text="${board.title}">제목</a>
         </div>
       </td>
       <td th:text="${board.writer}">작성자</td>
@@ -69,14 +74,19 @@
 
       <div th:each="i : ${#numbers.sequence(responseDTO.start, responseDTO.end)}">
         <li th:class="page-item" th:classappend="${i eq responseDTO.pageNo} ? active : ''">
-          <a class="page-link" th:href="|@{/commboard/list(pageNo=${i})}&${pagingRequestDTO.generateLinkExceptPageNo()}|" th:text="${i}"></a></li>
+          <a class="page-link"
+             th:href="|@{/commboard/list(pageNo=${i})}&${pagingRequestDTO.generateLinkExceptPageNo()}|"
+             th:text="${i}"></a></li>
       </div>
 
       <li class="page-item" th:classappend="${!responseDTO.next} ? 'disabled'">
         <a class="page-link" th:href="@{/commboard/list(pageNo=${responseDTO.end+1})}">Next</a></li>
 
-      <li class="page-item" th:classappend="${responseDTO.end * responseDTO.pagingSize >= responseDTO.total} ? 'disabled'"> <!--th:if="${responseDTO.next}"-->
-        <a class="page-link" th:href="@{/commboard/list(pageNo=${responseDTO.last})}">마지막페이지</a></li> <!--responseDTO.start+responseDTO.pagingSize-->
+      <li class="page-item"
+          th:classappend="${responseDTO.end * responseDTO.pagingSize >= responseDTO.total} ? 'disabled'">
+        <!--th:if="${responseDTO.next}"-->
+        <a class="page-link" th:href="@{/commboard/list(pageNo=${responseDTO.last})}">마지막페이지</a></li>
+      <!--responseDTO.start+responseDTO.pagingSize-->
     </ul>
   </div>
 </div>
